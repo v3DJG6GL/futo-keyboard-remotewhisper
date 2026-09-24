@@ -43,7 +43,7 @@ import org.futo.inputmethod.latin.personalization.LearnedWordsStoreLanguageOnly
 import org.futo.inputmethod.latin.personalization.userHistoryDictionaryLocales
 import org.futo.inputmethod.latin.uix.settings.NavigationItem
 import org.futo.inputmethod.latin.uix.settings.NavigationItemStyle
-import org.futo.inputmethod.latin.uix.settings.SettingSlider
+import org.futo.inputmethod.latin.uix.settings.useDataStore
 import org.futo.inputmethod.latin.uix.settings.Tip
 import org.futo.inputmethod.latin.uix.settings.UserSetting
 import org.futo.inputmethod.latin.uix.settings.UserSettingsMenu
@@ -52,7 +52,6 @@ import org.futo.inputmethod.latin.uix.settings.userSettingDecorationOnly
 import org.futo.inputmethod.latin.uix.settings.userSettingNavigationItem
 import org.futo.inputmethod.latin.uix.settings.userSettingToggleDataStore
 import java.util.Locale
-import kotlin.math.roundToInt
 
 const val LEARNED_WORDS_NAV_PATH = "learnedWords"
 const val LEARNED_WORDS_REVIEW_NAV_PATH = "learnedWords/review"
@@ -75,12 +74,12 @@ val LearnedWordsMenu = UserSettingsMenu(
             name = R.string.learned_words_auto_add_uses,
             visibilityCheck = autoAddEnabled
         ) {
-            SettingSlider(
-                title = stringResource(R.string.learned_words_auto_add_uses),
-                setting = LearnedWordsAutoAddUses,
-                range = 2.0f..10.0f,
-                transform = { it.roundToInt() },
-                steps = 7,
+            val uses = useDataStore(LearnedWordsAutoAddUses)
+            CountSlider(
+                label = R.plurals.learned_words_auto_add_uses_label,
+                value = uses.value,
+                range = 2..10,
+                onValueChange = { uses.setValue(it) },
                 subtitle = stringResource(R.string.learned_words_auto_add_uses_subtitle)
             )
         },

@@ -1,28 +1,34 @@
 package org.futo.inputmethod.latin.uix.settings.pages.learnedwords
 
+import android.content.Context
 import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -36,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -53,12 +60,9 @@ import org.futo.inputmethod.latin.uix.PersonalWord
 import org.futo.inputmethod.latin.uix.UserDictionaryIO
 import org.futo.inputmethod.latin.uix.getSetting
 import org.futo.inputmethod.latin.uix.settings.ScreenTitle
-import org.futo.inputmethod.latin.uix.settings.SettingSliderForDataStoreItem
-import org.futo.inputmethod.latin.uix.settings.SettingToggleDataStore
-import org.futo.inputmethod.latin.uix.settings.DataStoreItem
 import org.futo.inputmethod.latin.uix.settings.Tip
+import org.futo.inputmethod.latin.uix.settings.useDataStoreValue
 import java.util.Locale
-import kotlin.math.roundToInt
 
 private sealed interface ReviewState {
     data object Loading : ReviewState
@@ -66,7 +70,10 @@ private sealed interface ReviewState {
     data class Loaded(val result: LearnedWordsRepository.LoadResult) : ReviewState
 }
 
-/** Lists unknown learned words of a language and adds the selected ones to the personal dictionary. */
+/**
+ * Lists the unknown words the keyboard learned for a language. Selected words can be added to the
+ * personal dictionary or deleted from the learned words (typos).
+ */
 @Composable
 fun LearnedWordsReviewScreen(navController: NavHostController) {
     val context = LocalContext.current
@@ -79,6 +86,7 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
     var minUses by remember { mutableIntStateOf(context.getSetting(LearnedWordsAutoAddUses)) }
     var state by remember { mutableStateOf<ReviewState>(ReviewState.Loading) }
     var reloadKey by remember { mutableIntStateOf(0) }
+    var confirmDelete by remember { mutableStateOf(false) }
     val selected: SnapshotStateList<String> = remember { emptyList<String>().toMutableStateList() }
 
     LaunchedEffect(locale, reloadKey) {
@@ -96,35 +104,27 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
                 ?: emptyList()
         }
     }
+    // Keep the selection to words that are still listed after the threshold changes.
+    LaunchedEffect(candidates) {
+        val listed = candidates.mapTo(HashSet()) { it.word }
+        selected.retainAll { it in listed }
+    }
+
+    val languageOnly = useDataStoreValue(LearnedWordsStoreLanguageOnly)
+    val targetDictionary = locale?.let {
+        personalDictionaryLocale(it, languageOnly).getDisplayName(LocalConfiguration.current.locales[0])
+    } ?: ""
 
     Column(Modifier.fillMaxSize()) {
         ScreenTitle(stringResource(R.string.learned_words_review), showBack = true, navController = navController)
 
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            locales.forEach { option ->
-                FilterChip(
-                    selected = option == locale,
-                    onClick = { locale = option },
-                    label = { Text(option.getDisplayName(LocalConfiguration.current.locales[0])) }
-                )
-            }
-        }
+        LanguageChips(locales, locale) { locale = it }
 
-        SettingSliderForDataStoreItem(
-            title = stringResource(R.string.learned_words_review_min_uses),
-            item = DataStoreItem(minUses) { minUses = it },
-            default = LearnedWordsAutoAddUses.default,
-            range = 1.0f..20.0f,
-            transform = { it.roundToInt() },
-            steps = 18,
-        )
-        SettingToggleDataStore(
-            title = stringResource(R.string.learned_words_language_only),
-            setting = LearnedWordsStoreLanguageOnly,
-            subtitle = stringResource(R.string.learned_words_language_only_subtitle)
+        CountSlider(
+            label = R.plurals.learned_words_review_min_uses_label,
+            value = minUses,
+            range = 1..20,
+            onValueChange = { minUses = it },
         )
 
         when (val current = state) {
@@ -143,6 +143,7 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
                     CenteredMessage { Text(stringResource(R.string.learned_words_review_none)) }
                 } else {
                     SelectAllRow(candidates, selected)
+                    HorizontalDivider()
                     LazyColumn(Modifier.weight(1f)) {
                         items(candidates, key = { it.word }) { word ->
                             CandidateRow(word, word.word in selected) { checked ->
@@ -150,34 +151,61 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
                             }
                         }
                     }
-                    Button(
-                        enabled = selected.isNotEmpty(),
-                        modifier = Modifier.fillMaxWidth().padding(16.dp),
-                        onClick = {
-                            val target = locale ?: return@Button
+                    ActionBar(
+                        selectedCount = selected.size,
+                        targetDictionary = targetDictionary,
+                        onDelete = { confirmDelete = true },
+                        onAdd = {
+                            val target = locale ?: return@ActionBar
                             val words = selected.toList()
                             scope.launch {
-                                withContext(Dispatchers.IO) {
-                                    addToPersonalDictionary(context, words, target)
-                                }
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.learned_words_review_added, words.size),
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                withContext(Dispatchers.IO) { addToPersonalDictionary(context, words, target) }
+                                toast(context, context.resources.getQuantityString(
+                                    R.plurals.learned_words_review_added, words.size, words.size))
                                 reloadKey++
                             }
-                        }
-                    ) {
-                        Text(stringResource(R.string.learned_words_review_add_selected, selected.size))
-                    }
+                        },
+                    )
                 }
             }
         }
     }
+
+    if (confirmDelete) {
+        val count = selected.size
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(pluralStringResource(R.plurals.learned_words_review_delete_title, count, count)) },
+            text = { Text(stringResource(R.string.learned_words_review_delete_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDelete = false
+                        val target = locale ?: return@TextButton
+                        val words = selected.toList()
+                        scope.launch {
+                            withContext(Dispatchers.IO) { repository.forget(target, words) }
+                            toast(context, context.resources.getQuantityString(
+                                R.plurals.learned_words_review_deleted, words.size, words.size))
+                            reloadKey++
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text(stringResource(R.string.learned_words_review_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) {
+                    Text(stringResource(R.string.learned_words_review_delete_cancel))
+                }
+            }
+        )
+    }
 }
 
-private fun addToPersonalDictionary(context: android.content.Context, words: List<String>, locale: Locale) {
+private fun toast(context: Context, text: String) =
+    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+
+private fun addToPersonalDictionary(context: Context, words: List<String>, locale: Locale) {
     val storedLocale = personalDictionaryLocale(locale, context.getSetting(LearnedWordsStoreLanguageOnly))
     UserDictionaryIO(context).put(words.map {
         PersonalWord(
@@ -195,14 +223,29 @@ private fun SelectAllRow(candidates: List<LearnedWord>, selected: SnapshotStateL
     val allSelected = candidates.all { it.word in selected }
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().clickable {
-            if (allSelected) selected.clear() else {
-                selected.clear(); selected.addAll(candidates.map { it.word })
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                if (allSelected) {
+                    selected.clear()
+                } else {
+                    selected.clear(); selected.addAll(candidates.map { it.word })
+                }
             }
-        }.padding(horizontal = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
         Checkbox(checked = allSelected, onCheckedChange = null)
-        Text(stringResource(R.string.learned_words_review_select_all, candidates.size))
+        Spacer(Modifier.width(16.dp))
+        Text(
+            stringResource(R.string.learned_words_review_select_all),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            pluralStringResource(R.plurals.learned_words_review_word_count, candidates.size, candidates.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -213,15 +256,55 @@ private fun CandidateRow(word: LearnedWord, checked: Boolean, onCheckedChange: (
     ).toString()
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) }.padding(horizontal = 8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Checkbox(checked = checked, onCheckedChange = null)
-        Column(Modifier.padding(vertical = 6.dp)) {
+        Spacer(Modifier.width(16.dp))
+        Column {
             Text(word.word, style = MaterialTheme.typography.bodyLarge)
             Text(
                 stringResource(R.string.learned_words_review_word_uses, word.uses, lastUsed),
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun ActionBar(
+    selectedCount: Int,
+    targetDictionary: String,
+    onDelete: () -> Unit,
+    onAdd: () -> Unit,
+) {
+    Surface(tonalElevation = 3.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                if (selectedCount == 0) {
+                    stringResource(R.string.learned_words_review_nothing_selected)
+                } else {
+                    pluralStringResource(R.plurals.learned_words_review_selection, selectedCount, selectedCount, targetDictionary)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(
+                    enabled = selectedCount > 0,
+                    onClick = onDelete,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.weight(1f)
+                ) { Text(stringResource(R.string.learned_words_review_delete)) }
+                Button(
+                    enabled = selectedCount > 0,
+                    onClick = onAdd,
+                    modifier = Modifier.weight(1.4f)
+                ) { Text(stringResource(R.string.learned_words_review_add)) }
+            }
         }
     }
 }

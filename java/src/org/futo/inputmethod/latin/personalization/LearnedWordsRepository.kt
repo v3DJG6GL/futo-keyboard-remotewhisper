@@ -68,6 +68,16 @@ class LearnedWordsRepository(private val context: Context) : Closeable {
             .sortedWith(compareByDescending<LearnedWord> { it.uses }.thenBy { it.word })
     }
 
+    /**
+     * Makes the keyboard forget [words] of [locale] (typos, for example). Removal and flush are
+     * queued on the dictionary thread, so a following [load] no longer sees them.
+     */
+    fun forget(locale: Locale, words: Collection<String>) {
+        val dictionary = userHistoryDictionaryFor(context, locale)
+        words.forEach { dictionary.removeUnigramEntryDynamically(it) }
+        dictionary.asyncFlushBinaryDictionary()
+    }
+
     override fun close() {
         knownWordsLookup.closeDictionaries()
     }
