@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Learned words: words the keyboard remembers from typing (user history) -->
+    <string name="learned_words_title">Learned words</string>
+    <string name="learned_words_subtitle">Review, export, or add learned words to your personal dictionary</string>
+    <string name="learned_words_tip">The keyboard remembers the words you type to improve predictions. Words that are in none of its dictionaries can be added to your personal dictionary, which all keyboards and the spell checker share.</string>
+
+    <string name="learned_words_auto_add">Add new words to personal dictionary</string>
+    <string name="learned_words_auto_add_subtitle">Unknown words you keep typing are added to your personal dictionary automatically</string>
+    <string name="learned_words_auto_add_uses">Times typed before adding</string>
+    <string name="learned_words_auto_add_uses_subtitle">Words at the start of a sentence are not counted</string>
+    <string name="learned_words_add_on_pick">Add when picked from suggestions</string>
+    <string name="learned_words_add_on_pick_subtitle">Tapping an unknown word you typed in the suggestion bar adds it right away</string>
+    <string name="learned_words_language_only">Store without region</string>
+    <string name="learned_words_language_only_subtitle">Add words for the language only (for example German instead of German (Switzerland)), so every variant of the language uses them</string>
+
+    <string name="learned_words_review">Review learned words</string>
+    <string name="learned_words_review_subtitle">Pick unknown learned words to add to your personal dictionary</string>
+    <string name="learned_words_review_min_uses">Typed at least</string>
+    <string name="learned_words_review_loading">Loading learned words…</string>
+    <string name="learned_words_review_read_failed">Could not read the learned words of this language.</string>
+    <string name="learned_words_review_none">No unknown learned words for this language.</string>
+    <string name="learned_words_review_no_main_dictionary">This language has no main dictionary, so known and unknown words cannot be told apart. All learned words are listed.</string>
+    <string name="learned_words_review_select_all">Select all (%1$d)</string>
+    <string name="learned_words_review_word_uses">Typed about %1$d times, last %2$s</string>
+    <string name="learned_words_review_add_selected">Add %1$d to personal dictionary</string>
+    <string name="learned_words_review_added">Added %1$d words to your personal dictionary</string>
+
+    <string name="learned_words_export">Export learned words</string>
+    <string name="learned_words_export_subtitle">Save all learned words of every language to a file</string>
+    <string name="learned_words_export_format_json">JSON</string>
+    <string name="learned_words_export_format_csv">CSV (spreadsheet)</string>
+    <string name="learned_words_export_include_ngrams">Include word sequences</string>
+    <string name="learned_words_export_button">Export</string>
+    <string name="learned_words_export_cancel">Cancel</string>
+    <string name="learned_words_export_done">Exported %1$d learned words</string>
+    <string name="learned_words_export_failed">Export failed: %1$s</string>
+</resources>
