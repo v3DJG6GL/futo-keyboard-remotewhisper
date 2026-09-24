@@ -34,6 +34,14 @@ def forkVersion = {
 }()
 
 android {
+    // Upstream derives defaultConfig's version from `git rev-list ... master`, which yields -1
+    // (and a failing build) wherever no `master` branch exists, e.g. in CI. Every variant gets
+    // its version from the remotewhisper flavor below; mirror it here to keep defaultConfig valid.
+    defaultConfig {
+        versionName forkVersion.name
+        versionCode forkVersion.code
+    }
+
     // Index 0: the distribution dimension takes priority over the upstream buildType
     // dimension (stable/unstable/playstore) for manifests, resources and BuildConfig fields.
     flavorDimensions.add(0, 'distribution')
