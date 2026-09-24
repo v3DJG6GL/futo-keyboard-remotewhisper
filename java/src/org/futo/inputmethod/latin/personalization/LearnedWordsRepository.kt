@@ -56,13 +56,24 @@ class LearnedWordsRepository(private val context: Context) : Closeable {
         return LoadResult(locale, words, canTellKnownWords)
     }
 
-    /** Unknown words that are worth offering for the personal dictionary, most used first. */
-    fun candidatesForPersonalDictionary(result: LoadResult, minUses: Int): List<LearnedWord> {
+    /**
+     * Unknown words that are worth offering for the personal dictionary, most used first. With
+     * [includePersonalDictionary], words already in the personal dictionary are listed as well.
+     */
+    fun candidatesForPersonalDictionary(
+        result: LoadResult,
+        minUses: Int,
+        includePersonalDictionary: Boolean = false,
+    ): List<LearnedWord> {
         val blacklist = context.getSetting(SUGGESTION_BLACKLIST)
         val locale = result.locale
         return result.words
-            .filter { it.known == false || (it.known == null && !result.canTellKnownWords) }
-            .filter { !it.inPersonalDictionary && it.uses >= minUses }
+            // The lookup includes the personal dictionary, so its words count as known.
+            .filter {
+                if (it.inPersonalDictionary) includePersonalDictionary
+                else it.known == false || (it.known == null && !result.canTellKnownWords)
+            }
+            .filter { it.uses >= minUses }
             .filter { isPlausiblePersonalDictionaryWord(it.word) }
             .filter { word -> SuggestionBlacklist.getCapitalVariants(word.word, locale).none { it in blacklist } }
             .sortedWith(compareByDescending<LearnedWord> { it.uses }.thenBy { it.word })

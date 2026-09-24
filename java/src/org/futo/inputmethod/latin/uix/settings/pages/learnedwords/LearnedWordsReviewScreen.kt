@@ -20,9 +20,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,12 +38,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -72,7 +78,8 @@ private sealed interface ReviewState {
 
 /**
  * Lists the unknown words the keyboard learned for a language. Selected words can be added to the
- * personal dictionary or deleted from the learned words (typos).
+ * personal dictionary or deleted from the learned words (typos). Optionally also lists the learned
+ * words that are already in the personal dictionary, dimmed and not selectable.
  */
 @Composable
 fun LearnedWordsReviewScreen(navController: NavHostController) {
@@ -87,6 +94,7 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
     var state by remember { mutableStateOf<ReviewState>(ReviewState.Loading) }
     var reloadKey by remember { mutableIntStateOf(0) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var showAdded by rememberSaveable { mutableStateOf(false) }
     val selected: SnapshotStateList<String> = remember { emptyList<String>().toMutableStateList() }
 
     LaunchedEffect(locale, reloadKey) {
@@ -100,13 +108,15 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
 
     val candidates by remember {
         derivedStateOf {
-            (state as? ReviewState.Loaded)?.let { repository.candidatesForPersonalDictionary(it.result, minUses) }
-                ?: emptyList()
+            (state as? ReviewState.Loaded)?.let {
+                repository.candidatesForPersonalDictionary(it.result, minUses, includePersonalDictionary = showAdded)
+            } ?: emptyList()
         }
     }
-    // Keep the selection to words that are still listed after the threshold changes.
-    LaunchedEffect(candidates) {
-        val listed = candidates.mapTo(HashSet()) { it.word }
+    val selectable by remember { derivedStateOf { candidates.filter { !it.inPersonalDictionary } } }
+    // Keep the selection to words that are still selectable after the threshold changes.
+    LaunchedEffect(selectable) {
+        val listed = selectable.mapTo(HashSet()) { it.word }
         selected.retainAll { it in listed }
     }
 
@@ -127,6 +137,8 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
             onValueChange = { minUses = it },
         )
 
+        ViewModeSwitch(showAdded) { showAdded = it }
+
         when (val current = state) {
             ReviewState.Loading -> CenteredMessage {
                 CircularProgressIndicator()
@@ -142,7 +154,7 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
                 if (candidates.isEmpty()) {
                     CenteredMessage { Text(stringResource(R.string.learned_words_review_none)) }
                 } else {
-                    SelectAllRow(candidates, selected)
+                    SelectAllRow(selectable, candidates.size - selectable.size, selected)
                     HorizontalDivider()
                     LazyColumn(Modifier.weight(1f)) {
                         items(candidates, key = { it.word }) { word ->
@@ -218,14 +230,34 @@ private fun addToPersonalDictionary(context: Context, words: List<String>, local
     })
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectAllRow(candidates: List<LearnedWord>, selected: SnapshotStateList<String>) {
-    val allSelected = candidates.all { it.word in selected }
+private fun ViewModeSwitch(showAdded: Boolean, onChange: (Boolean) -> Unit) {
+    val labels = listOf(R.string.learned_words_review_show_new, R.string.learned_words_review_show_all)
+    SingleChoiceSegmentedButtonRow(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        labels.forEachIndexed { index, label ->
+            SegmentedButton(
+                selected = showAdded == (index == 1),
+                onClick = { onChange(index == 1) },
+                shape = SegmentedButtonDefaults.itemShape(index, labels.size),
+            ) { Text(stringResource(label)) }
+        }
+    }
+}
+
+/** [candidates] are the selectable words; [alreadyAdded] counts the listed words that are not. */
+@Composable
+private fun SelectAllRow(candidates: List<LearnedWord>, alreadyAdded: Int, selected: SnapshotStateList<String>) {
+    val allSelected = candidates.isNotEmpty() && candidates.all { it.word in selected }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
+            .clickable(enabled = candidates.isNotEmpty()) {
                 if (allSelected) {
                     selected.clear()
                 } else {
@@ -234,18 +266,27 @@ private fun SelectAllRow(candidates: List<LearnedWord>, selected: SnapshotStateL
             }
             .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        Checkbox(checked = allSelected, onCheckedChange = null)
+        Checkbox(checked = allSelected, onCheckedChange = null, enabled = candidates.isNotEmpty())
         Spacer(Modifier.width(16.dp))
         Text(
             stringResource(R.string.learned_words_review_select_all),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        Text(
-            pluralStringResource(R.plurals.learned_words_review_word_count, candidates.size, candidates.size),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                pluralStringResource(R.plurals.learned_words_review_word_count, candidates.size, candidates.size),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (alreadyAdded > 0) {
+                Text(
+                    pluralStringResource(R.plurals.learned_words_review_already_added_count, alreadyAdded, alreadyAdded),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 
@@ -254,19 +295,26 @@ private fun CandidateRow(word: LearnedWord, checked: Boolean, onCheckedChange: (
     val lastUsed = DateUtils.getRelativeTimeSpanString(
         word.lastUsed * 1000L, System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS
     ).toString()
+    val added = word.inPersonalDictionary
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = !added) { onCheckedChange(!checked) }
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Checkbox(checked = checked, onCheckedChange = null)
+        // Already added: ticked but greyed out, so it reads as done rather than as selected.
+        Checkbox(checked = checked || added, onCheckedChange = null, enabled = !added)
         Spacer(Modifier.width(16.dp))
-        Column {
-            Text(word.word, style = MaterialTheme.typography.bodyLarge)
+        Column(if (added) Modifier.alpha(0.6f) else Modifier) {
             Text(
-                stringResource(R.string.learned_words_review_word_uses, word.uses, lastUsed),
+                word.word,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (added) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                if (added) stringResource(R.string.learned_words_review_word_in_dictionary, word.uses, lastUsed)
+                else stringResource(R.string.learned_words_review_word_uses, word.uses, lastUsed),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
