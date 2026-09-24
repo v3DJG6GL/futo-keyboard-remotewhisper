@@ -142,7 +142,8 @@ git fetch forgejo 'refs/heads/topic/*:refs/heads/topic/*'
 
 ## CI
 
-`.forgejo/workflows/build.yml` builds `main` and the fork topics on every push.
+`.forgejo/workflows/build.yml` builds `main` and `topic/ci` on every push. Forgejo only runs
+workflows that exist in the pushed branch, so the other topics are built as part of `main`.
 Upstream-clean topics carry no workflow files, so pushing them triggers nothing; build one
 with a manual run of the workflow on `main` (Actions tab, `ref` = the topic) or
 `FORGEJO_TOKEN=… fork/ci-dispatch.sh topic/<name>`. `.forgejo/workflows/release.yml` runs
