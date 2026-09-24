@@ -1,0 +1,16 @@
+# Topic branches that make up `main`, in merge order.
+#
+#   <branch>                      <base>
+#
+# base = @base          the branch sits directly on the upstream release tag
+#                       (upstream-clean topics must use this so they stay PR-able)
+# base = <branch>       the branch is stacked on another topic listed above it
+#
+# fork/rebuild-main.sh merges the branches into `main` in this order,
+# fork/update-upstream.sh rebases them in this order.
+
+topic/dict-recorrection-fix   @base
+topic/dict-learned-words      @base
+topic/fork-base               @base
+topic/whisper-backend         topic/fork-base
+topic/ci                      topic/fork-base

@@ -474,3 +474,4 @@ dependencies {
 
 project.logger.lifecycle("versionCode = ${android.defaultConfig.versionCode}")
 project.logger.lifecycle("versionName = ${android.defaultConfig.versionName}")
+apply from: 'fork/fork.gradle' // fork: install identity, version and fork-only sources (see FORK.md)
