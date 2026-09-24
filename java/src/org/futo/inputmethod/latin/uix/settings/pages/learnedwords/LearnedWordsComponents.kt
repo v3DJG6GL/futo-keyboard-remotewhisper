@@ -1,6 +1,19 @@
 package org.futo.inputmethod.latin.uix.settings.pages.learnedwords
 
 import androidx.annotation.PluralsRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,9 +65,10 @@ internal fun countLabel(@PluralsRes id: Int, count: Int): AnnotatedString {
 }
 
 /**
- * A whole-number setting shown as a sentence containing its value, with a full-width slider
- * below. The value is only changed with the slider.
+ * A whole-number setting shown as a sentence containing its value, with a large, finger-friendly
+ * slider below and − / + buttons for exact single steps.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun CountSlider(
     @PluralsRes label: Int,
@@ -64,9 +78,16 @@ internal fun CountSlider(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
 ) {
+    val haptics = LocalHapticFeedback.current
     // Track the thumb continuously while dragging; commit whole numbers.
     var position by remember(value) { mutableFloatStateOf(value.toFloat()) }
     val shown = position.roundToInt()
+
+    fun commit(newValue: Int) {
+        val clamped = newValue.coerceIn(range)
+        position = clamped.toFloat()
+        onValueChange(clamped)
+    }
 
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
         Text(countLabel(label, shown), style = MaterialTheme.typography.titleMedium)
@@ -77,13 +98,63 @@ internal fun CountSlider(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Slider(
-            value = position,
-            onValueChange = { position = it },
-            onValueChangeFinished = { onValueChange(position.roundToInt()) },
-            valueRange = range.first.toFloat()..range.last.toFloat(),
-            steps = (range.last - range.first - 1).coerceAtLeast(0),
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 4.dp)
+        ) {
+            StepButton("−", enabled = shown > range.first) { commit(shown - 1) }
+
+            val colors = SliderDefaults.colors(
+                // Snap points stay; their dots are only noise at this density.
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent,
+            )
+            val interaction = remember { MutableInteractionSource() }
+            Slider(
+                value = position,
+                onValueChange = {
+                    if (it.roundToInt() != position.roundToInt()) {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    }
+                    position = it
+                },
+                onValueChangeFinished = { commit(position.roundToInt()) },
+                valueRange = range.first.toFloat()..range.last.toFloat(),
+                steps = (range.last - range.first - 1).coerceAtLeast(0),
+                colors = colors,
+                interactionSource = interaction,
+                thumb = {
+                    Box(
+                        Modifier
+                            .size(width = 20.dp, height = 44.dp)
+                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp))
+                    )
+                },
+                track = { state ->
+                    SliderDefaults.Track(
+                        sliderState = state,
+                        colors = colors,
+                        modifier = Modifier.height(12.dp),
+                        drawStopIndicator = null,
+                    )
+                },
+                modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+            )
+
+            StepButton("+", enabled = shown < range.last) { commit(shown + 1) }
+        }
+    }
+}
+
+@Composable
+private fun StepButton(symbol: String, enabled: Boolean, onClick: () -> Unit) {
+    FilledTonalIconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(48.dp),
+    ) {
+        Text(symbol, style = MaterialTheme.typography.titleLarge, fontFamily = FontFamily.Monospace)
     }
 }
 
