@@ -18,6 +18,7 @@ import org.futo.inputmethod.latin.uix.settings.UserSettingsMenu
 import org.futo.inputmethod.latin.uix.settings.useDataStoreValue
 import org.futo.inputmethod.latin.uix.settings.userSettingNavigationItem
 import org.futo.inputmethod.latin.uix.settings.userSettingToggleDataStore
+import org.futo.inputmethod.latin.fork.whisper.remoteWhisperNavItem // fork: remote Whisper
 
 private val visibilityCheckNotSystemVoiceInput = @Composable {
     useDataStoreValue(USE_SYSTEM_VOICE_INPUT) == false
@@ -95,6 +96,7 @@ val VoiceInputMenu = UserSettingsMenu(
             style = NavigationItemStyle.Misc,
             navigateTo = "languages"
         ).copy(visibilityCheck = visibilityCheckNotSystemVoiceInput),
+        remoteWhisperNavItem, // fork: remote Whisper
         //}
     )
 )
