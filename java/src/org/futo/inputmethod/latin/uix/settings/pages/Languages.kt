@@ -56,6 +56,7 @@ import org.futo.inputmethod.latin.SubtypesSetting
 import org.futo.inputmethod.latin.uix.FileKind
 import org.futo.inputmethod.latin.uix.ResourceHelper
 import org.futo.inputmethod.latin.uix.getSetting
+import org.futo.inputmethod.latin.fork.whisper.ForkVoiceInputResourceDialog // fork: remote Whisper
 import org.futo.inputmethod.latin.uix.icon
 import org.futo.inputmethod.latin.uix.kindTitle
 import org.futo.inputmethod.latin.uix.namePreferenceKeyFor
@@ -579,6 +580,10 @@ fun LanguagesScreen(navController: NavHostController = rememberNavController()) 
 
     val inputMethodKeys = remember(inputMethodList) { inputMethodList.keys.toList().sorted() }
 
+    // fork: remote Whisper - voice input models get a dialog that also offers the custom server
+    if (deleteDialogInfo.value?.kind == FileKind.VoiceInput) {
+        ForkVoiceInputResourceDialog(deleteDialogInfo.value!!.locale, navController) { deleteDialogInfo.value = null }
+    } else
     if (deleteDialogInfo.value != null) {
         val info = deleteDialogInfo.value!!
         ConfirmResourceActionDialog(
