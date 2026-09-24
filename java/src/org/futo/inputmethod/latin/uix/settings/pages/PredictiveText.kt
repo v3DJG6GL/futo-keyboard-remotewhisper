@@ -18,6 +18,7 @@ import org.futo.inputmethod.latin.uix.settings.userSettingDecorationOnly
 import org.futo.inputmethod.latin.uix.settings.userSettingNavigationItem
 import org.futo.inputmethod.latin.uix.settings.userSettingToggleDataStore
 import org.futo.inputmethod.latin.uix.settings.userSettingToggleSharedPrefs
+import org.futo.inputmethod.latin.uix.settings.pages.learnedwords.LEARNED_WORDS_NAV_PATH
 
 private val visibilityCheckLMEnabled = @Composable {
     useSharedPrefsBool(Settings.PREF_KEY_USE_TRANSFORMER_LM, true).value
@@ -65,6 +66,14 @@ val PredictiveTextMenu = UserSettingsMenu(
             navigate = { nav ->
                 nav.navigate("pdict")
             }
+        ),
+
+        userSettingNavigationItem(
+            title = R.string.learned_words_title,
+            subtitle = R.string.learned_words_subtitle,
+            style = NavigationItemStyle.HomeSecondary,
+            icon = R.drawable.text_prediction,
+            navigateTo = LEARNED_WORDS_NAV_PATH
         ),
 
         userSettingNavigationItem(
