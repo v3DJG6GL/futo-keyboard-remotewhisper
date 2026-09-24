@@ -30,9 +30,10 @@
     <string name="learned_words_review_loading">Loading learned words…</string>
     <string name="learned_words_review_read_failed">Could not read the learned words of this language. Open the keyboard once and try again.</string>
     <string name="learned_words_review_none">No unknown words typed this often. Lower the number above to see more.</string>
-    <!-- View mode: only words that can still be added, or also those already in the personal dictionary -->
-    <string name="learned_words_review_show_new">Not added yet</string>
-    <string name="learned_words_review_show_all">All words</string>
+    <!-- Filter: learned words not yet / already in the personal dictionary. Keep short, one line each. -->
+    <string name="learned_words_review_show_new">Not in dictionary</string>
+    <string name="learned_words_review_show_added">In dictionary</string>
+    <string name="learned_words_review_none_in_dictionary">None of the words typed this often are in your personal dictionary yet.</string>
     <string name="learned_words_review_no_main_dictionary">This language has no main dictionary, so known and unknown words cannot be told apart. All learned words are listed.</string>
     <string name="learned_words_review_select_all">Select all</string>
     <plurals name="learned_words_review_word_count">
@@ -41,10 +42,6 @@
     </plurals>
     <string name="learned_words_review_word_uses">Typed about %1$d times, last %2$s</string>
     <string name="learned_words_review_word_in_dictionary">In your personal dictionary. Typed about %1$d times, last %2$s</string>
-    <plurals name="learned_words_review_already_added_count">
-        <item quantity="one">%1$d already added</item>
-        <item quantity="other">%1$d already added</item>
-    </plurals>
     <!-- Above the action buttons; %1$d = selected words, %2$s = dictionary name, e.g. German (Switzerland) -->
     <plurals name="learned_words_review_selection">
         <item quantity="one">%1$d selected. Adding saves it to %2$s.</item>

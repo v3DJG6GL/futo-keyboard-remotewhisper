@@ -25,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults.colors
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +80,7 @@ private sealed interface ReviewState {
 
 /**
  * Lists the unknown words the keyboard learned for a language. Selected words can be added to the
- * personal dictionary or deleted from the learned words (typos). Optionally also lists the learned
+ * personal dictionary or deleted from the learned words (typos). Alternatively lists the learned
  * words that are already in the personal dictionary, dimmed and not selectable.
  */
 @Composable
@@ -109,7 +111,7 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
     val candidates by remember {
         derivedStateOf {
             (state as? ReviewState.Loaded)?.let {
-                repository.candidatesForPersonalDictionary(it.result, minUses, includePersonalDictionary = showAdded)
+                repository.candidatesForPersonalDictionary(it.result, minUses, inPersonalDictionary = showAdded)
             } ?: emptyList()
         }
     }
@@ -152,9 +154,20 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
                     Tip(stringResource(R.string.learned_words_review_no_main_dictionary))
                 }
                 if (candidates.isEmpty()) {
-                    CenteredMessage { Text(stringResource(R.string.learned_words_review_none)) }
+                    CenteredMessage {
+                        Text(stringResource(
+                            if (showAdded) R.string.learned_words_review_none_in_dictionary
+                            else R.string.learned_words_review_none
+                        ))
+                    }
+                } else if (showAdded) {
+                    CountRow(candidates.size)
+                    HorizontalDivider()
+                    LazyColumn(Modifier.weight(1f)) {
+                        items(candidates, key = { it.word }) { word -> CandidateRow(word, false) {} }
+                    }
                 } else {
-                    SelectAllRow(selectable, candidates.size - selectable.size, selected)
+                    SelectAllRow(candidates, selected)
                     HorizontalDivider()
                     LazyColumn(Modifier.weight(1f)) {
                         items(candidates, key = { it.word }) { word ->
@@ -233,7 +246,7 @@ private fun addToPersonalDictionary(context: Context, words: List<String>, local
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ViewModeSwitch(showAdded: Boolean, onChange: (Boolean) -> Unit) {
-    val labels = listOf(R.string.learned_words_review_show_new, R.string.learned_words_review_show_all)
+    val labels = listOf(R.string.learned_words_review_show_new, R.string.learned_words_review_show_added)
     SingleChoiceSegmentedButtonRow(
         Modifier
             .fillMaxWidth()
@@ -244,14 +257,32 @@ private fun ViewModeSwitch(showAdded: Boolean, onChange: (Boolean) -> Unit) {
                 selected = showAdded == (index == 1),
                 onClick = { onChange(index == 1) },
                 shape = SegmentedButtonDefaults.itemShape(index, labels.size),
-            ) { Text(stringResource(label)) }
+                // The fill marks the active filter; no check mark, so the labels keep one line.
+                icon = {},
+                colors = colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primary,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                    activeBorderColor = MaterialTheme.colorScheme.primary,
+                    inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                    inactiveContentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
     }
 }
 
-/** [candidates] are the selectable words; [alreadyAdded] counts the listed words that are not. */
 @Composable
-private fun SelectAllRow(candidates: List<LearnedWord>, alreadyAdded: Int, selected: SnapshotStateList<String>) {
+private fun CountRow(count: Int) {
+    Text(
+        pluralStringResource(R.plurals.learned_words_review_word_count, count, count),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+    )
+}
+
+@Composable
+private fun SelectAllRow(candidates: List<LearnedWord>, selected: SnapshotStateList<String>) {
     val allSelected = candidates.isNotEmpty() && candidates.all { it.word in selected }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -273,20 +304,11 @@ private fun SelectAllRow(candidates: List<LearnedWord>, alreadyAdded: Int, selec
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                pluralStringResource(R.plurals.learned_words_review_word_count, candidates.size, candidates.size),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            if (alreadyAdded > 0) {
-                Text(
-                    pluralStringResource(R.plurals.learned_words_review_already_added_count, alreadyAdded, alreadyAdded),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        Text(
+            pluralStringResource(R.plurals.learned_words_review_word_count, candidates.size, candidates.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

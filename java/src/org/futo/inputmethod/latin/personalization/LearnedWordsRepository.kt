@@ -58,20 +58,20 @@ class LearnedWordsRepository(private val context: Context) : Closeable {
 
     /**
      * Unknown words that are worth offering for the personal dictionary, most used first. With
-     * [includePersonalDictionary], words already in the personal dictionary are listed as well.
+     * [inPersonalDictionary], the learned words that are already in it instead.
      */
     fun candidatesForPersonalDictionary(
         result: LoadResult,
         minUses: Int,
-        includePersonalDictionary: Boolean = false,
+        inPersonalDictionary: Boolean = false,
     ): List<LearnedWord> {
         val blacklist = context.getSetting(SUGGESTION_BLACKLIST)
         val locale = result.locale
         return result.words
             // The lookup includes the personal dictionary, so its words count as known.
             .filter {
-                if (it.inPersonalDictionary) includePersonalDictionary
-                else it.known == false || (it.known == null && !result.canTellKnownWords)
+                if (inPersonalDictionary) it.inPersonalDictionary
+                else !it.inPersonalDictionary && (it.known == false || (it.known == null && !result.canTellKnownWords))
             }
             .filter { it.uses >= minUses }
             .filter { isPlausiblePersonalDictionaryWord(it.word) }
