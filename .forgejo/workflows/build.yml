@@ -1,0 +1,107 @@
+name: build
+
+# Builds and unit-tests the fork (main and fork topics) and upstream-clean topic branches.
+#
+# Upstream-clean topics (topic/dict-*) carry no workflow files, so pushing them triggers
+# nothing. Build them with a manual run of this workflow on main, passing the branch as `ref`
+# (Actions tab, or fork/ci-dispatch.sh <branch>).
+
+on:
+  push:
+    branches: [main, 'topic/**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag or commit to build (default = the selected branch)
+        required: false
+        default: ''
+
+concurrency:
+  group: build-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+  ANDROID_PACKAGES: platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358 cmake;3.22.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # The fork's CI scripts, from the commit that defines this workflow.
+      - uses: actions/checkout@v7
+        with:
+          path: tools
+          fetch-depth: 1
+          sparse-checkout: fork
+
+      # The code to build. Full history and tags: fork/version.sh derives the version from them.
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          path: src
+          fetch-depth: 0
+          submodules: false
+
+      - name: Install git-lfs
+        run: |
+          command -v git-lfs >/dev/null || { apt-get update -qq && apt-get install -y -qq git-lfs; }
+          git lfs version
+
+      - name: Init submodules
+        working-directory: src
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: sh ../tools/fork/ci/init-submodules.sh
+
+      - name: Check the swipe model is not an LFS pointer
+        working-directory: src
+        run: |
+          if grep -rlI 'version https://git-lfs.github.com/spec' java/assets/futo-swipe; then
+            echo "java/assets/futo-swipe contains git-lfs pointer files"; exit 1
+          fi
+
+      - uses: https://github.com/actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: https://github.com/android-actions/setup-android@v3
+        with:
+          packages: ${{ env.ANDROID_PACKAGES }}
+
+      - uses: https://github.com/gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Build and test
+        working-directory: src
+        run: |
+          if [ -f fork/fork.gradle ]; then
+            echo "Fork build"
+            ./gradlew testRemotewhisperUnstableDebugUnitTest assembleRemotewhisperUnstableDebug
+          else
+            echo "Upstream-clean build"
+            ./gradlew testUnstableDebugUnitTest assembleUnstableDebug
+          fi
+
+      - name: Check upstream-clean topic
+        if: ${{ hashFiles('src/fork/fork.gradle') == '' }}
+        working-directory: src
+        run: sh ../tools/fork/check-upstream-clean.sh HEAD
+
+      - uses: https://code.forgejo.org/actions/upload-artifact@v3
+        with:
+          name: apk-unstable-debug
+          path: src/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+
+      - uses: https://code.forgejo.org/actions/upload-artifact@v3
+        if: always()
+        with:
+          name: reports
+          path: |
+            src/build/reports/tests/**
+            src/voiceinput-shared/build/reports/tests/**
+          if-no-files-found: ignore
