@@ -2,6 +2,7 @@ package org.futo.voiceinput.shared.types
 
 import android.content.Context
 import androidx.annotation.StringRes
+import org.futo.voiceinput.shared.ggml.IWhisperInference
 import org.futo.voiceinput.shared.ggml.WhisperGGML
 import java.io.File
 import java.io.FileInputStream
@@ -39,7 +40,7 @@ interface ModelLoader {
     fun exists(context: Context): Boolean
     fun getRequiredDownloadList(context: Context): List<String>
 
-    fun loadGGML(context: Context): WhisperGGML
+    fun loadGGML(context: Context): IWhisperInference
 
     fun key(context: Context): Any
 }
@@ -56,7 +57,7 @@ internal class ModelBuiltInAsset(
         return listOf()
     }
 
-    override fun loadGGML(context: Context): WhisperGGML {
+    override fun loadGGML(context: Context): IWhisperInference {
         val file = loadMappedFile(context, ggmlFile)
         return WhisperGGML(file)
     }
@@ -97,7 +98,7 @@ internal class ModelDownloadable(
         }
     }
 
-    override fun loadGGML(context: Context): WhisperGGML {
+    override fun loadGGML(context: Context): IWhisperInference {
         val file = context.tryOpenDownloadedModel(ggmlFile)
         return WhisperGGML(file)
     }
@@ -119,7 +120,7 @@ public class ModelFileFile(
         return listOf()
     }
 
-    override fun loadGGML(context: Context): WhisperGGML {
+    override fun loadGGML(context: Context): IWhisperInference {
         val file = tryOpenDownloadedModel(file)
         return WhisperGGML(file)
     }
