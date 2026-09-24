@@ -83,6 +83,8 @@ jobs:
             ./gradlew testRemotewhisperUnstableDebugUnitTest assembleRemotewhisperUnstableDebug
           else
             echo "Upstream-clean build"
+            # Upstream derives the version from a `master` branch, which CI checkouts lack.
+            export VERSION_NAME="0.0.0-topic" VERSION_CODE=1
             ./gradlew testUnstableDebugUnitTest assembleUnstableDebug
           fi
 
