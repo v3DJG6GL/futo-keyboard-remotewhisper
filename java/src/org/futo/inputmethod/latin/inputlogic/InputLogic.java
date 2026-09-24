@@ -161,7 +161,7 @@ public final class InputLogic {
                     }
                 }
 
-                return candidate.suggestions.copyWithoutWord(word);
+                return candidate.suggestions.copyForRecorrection(word);
             }
         }
         return null;
