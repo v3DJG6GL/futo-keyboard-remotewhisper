@@ -1,0 +1,109 @@
+name: release
+
+# Builds, signs and publishes a fork release. Triggered by pushing a tag v<base>-rw.<N>,
+# which fork/release.sh does (tags pushed by the Actions token itself would not trigger it).
+
+on:
+  push:
+    tags: ['v*-rw.*']
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+  ANDROID_PACKAGES: platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358 cmake;3.22.1
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Install git-lfs
+        run: |
+          command -v git-lfs >/dev/null || { apt-get update -qq && apt-get install -y -qq git-lfs; }
+          git lfs version
+
+      - name: Init submodules
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: sh fork/ci/init-submodules.sh
+
+      - name: Determine version
+        run: |
+          eval "$(sh fork/version.sh)"
+          echo "VERSION_NAME=$VERSION_NAME, VERSION_CODE=$VERSION_CODE"
+          if [ "$VERSION_NAME" != "${GITHUB_REF_NAME#v}" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match fork/version.sh ($VERSION_NAME)"; exit 1
+          fi
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          echo "BRANCH_NAME=main" >> "$GITHUB_ENV"
+
+      - uses: https://github.com/actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: https://github.com/android-actions/setup-android@v3
+        with:
+          packages: ${{ env.ANDROID_PACKAGES }}
+
+      - uses: https://github.com/gradle/actions/setup-gradle@v6
+        with:
+          cache-read-only: true
+
+      - name: Set up signing
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        run: |
+          set -eu
+          # Must be the key that signed every earlier release, or users cannot update.
+          printf '%s' "$KEYSTORE_B64" | base64 -d > key.jks
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "keyAlias=$KEYSTORE_ALIAS"
+            echo "storeFile=key.jks"
+          } > keystore.properties
+
+      - name: Build and verify
+        run: sh fork/verify-build.sh RemotewhisperStableRelease
+
+      - name: Prepare release files
+        run: |
+          set -eu
+          base=$(git describe --tags --abbrev=0 --match '[0-9]*' --exclude '*-rc*' HEAD)
+          mkdir -p dist
+          name="futo-keyboard-remotewhisper-${GITHUB_REF_NAME}.apk"
+          cp "$(ls -t build/outputs/apk/remotewhisperStable/release/*.apk | head -n 1)" "dist/$name"
+          (cd dist && sha256sum "$name" > "$name.sha256")
+          {
+            echo "Based on upstream FUTO Keyboard [$base](https://github.com/futo-org/android-keyboard/releases/tag/$base)."
+            echo
+            echo "versionName \`$VERSION_NAME\`, versionCode \`$VERSION_CODE\`."
+            echo
+            echo "### Changes on top of upstream"
+            git log --no-merges --reverse --format='- %s' "$base..HEAD"
+          } > release-notes.md
+          cat release-notes.md
+
+      - uses: https://code.forgejo.org/actions/forgejo-release@v2.13.4
+        with:
+          direction: upload
+          release-dir: dist
+          release-notes-file: release-notes.md
+          token: ${{ secrets.RELEASE_TOKEN }}
+          override: false
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f key.jks keystore.properties
