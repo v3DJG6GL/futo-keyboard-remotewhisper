@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fork-only strings. Every name carries the fork_ prefix so it can never collide with an
+     upstream resource. Not part of the translation pipeline. -->
+<resources>
+    <!-- Application and keyboard name of the fork. "FUTO" should not be translated. -->
+    <string name="fork_app_name" translatable="false">FUTO Keyboard (Remote-Whisper)</string>
+</resources>

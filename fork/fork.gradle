@@ -1,0 +1,96 @@
+// Fork overlay for "FUTO Keyboard (Remote-Whisper)".
+//
+// Applied from the last line of the upstream build.gradle. Everything that makes this build
+// the fork (install identity, version, fork-only manifest entries, resources, sources and
+// dependencies) is carried by the `remotewhisper` product flavor defined here, so upstream
+// files stay untouched apart from that single `apply from:` line. See FORK.md.
+
+def forkVersion = {
+    def envName = System.getenv('VERSION_NAME')?.trim()
+    def envCode = System.getenv('VERSION_CODE')?.trim()
+    if (envName && envCode) {
+        return [name: envName, code: Integer.parseInt(envCode)]
+    }
+
+    def values = [:]
+    try {
+        def output = providers.exec {
+            commandLine 'sh', rootProject.file('fork/version.sh').absolutePath
+            ignoreExitValue true
+        }.standardOutput.asText.get()
+        output.eachLine { line ->
+            def separator = line.indexOf('=')
+            if (separator > 0) values[line.substring(0, separator)] = line.substring(separator + 1)
+        }
+    } catch (Exception e) {
+        project.logger.warn("fork/version.sh failed: ${e.message}")
+    }
+
+    if (values.VERSION_NAME && values.VERSION_CODE) {
+        return [name: values.VERSION_NAME, code: Integer.parseInt(values.VERSION_CODE)]
+    }
+    project.logger.warn('Could not determine the fork version, falling back to 0.0.0-rw.0')
+    return [name: '0.0.0-rw.0', code: 1]
+}()
+
+android {
+    // Upstream derives defaultConfig's version from `git rev-list ... master`, which yields -1
+    // (and a failing build) wherever no `master` branch exists, e.g. in CI. Every variant gets
+    // its version from the remotewhisper flavor below; mirror it here to keep defaultConfig valid.
+    defaultConfig {
+        versionName forkVersion.name
+        versionCode forkVersion.code
+    }
+
+    // Index 0: the distribution dimension takes priority over the upstream buildType
+    // dimension (stable/unstable/playstore) for manifests, resources and BuildConfig fields.
+    flavorDimensions.add(0, 'distribution')
+
+    productFlavors {
+        remotewhisper {
+            dimension 'distribution'
+            getIsDefault().set(true)
+
+            // Upstream flavor suffixes (.unstable, .playstore) still apply on top.
+            applicationId 'io.github.v3djg6gl.futo.keyboard.remotewhisper'
+            versionName forkVersion.name
+            versionCode forkVersion.code
+
+            // Upstream's update checker offers official FUTO APKs, which have a different
+            // package id and signing key.
+            buildConfigField 'boolean', 'UPDATE_CHECKING', 'false'
+        }
+    }
+
+    sourceSets {
+        remotewhisper {
+            manifest.srcFile 'java/remotewhisper/AndroidManifest.xml'
+            java.srcDirs = ['java/remotewhisper/java']
+            res.srcDirs = ['java/remotewhisper/res']
+        }
+        remotewhisperUnstable {
+            res.srcDirs = ['java/remotewhisper/res-unstable']
+        }
+    }
+}
+
+project.logger.lifecycle("fork versionCode = ${forkVersion.code}")
+project.logger.lifecycle("fork versionName = ${forkVersion.name}")
+
+// Keep upstream task names working, e.g. `assembleUnstableDebug` builds
+// `assembleRemotewhisperUnstableDebug`.
+afterEvaluate {
+    def forkTask = ~/^(assemble|bundle|install|uninstall|test|connected)Remotewhisper([A-Z].*)$/
+    tasks.names.toList().each { name ->
+        def match = name =~ forkTask
+        if (!match.matches()) return
+        def alias = match.group(1) + match.group(2)
+        if (!tasks.names.contains(alias)) {
+            tasks.register(alias) {
+                group = 'fork aliases'
+                description = "Alias for ${name}"
+                dependsOn name
+            }
+        }
+    }
+}
