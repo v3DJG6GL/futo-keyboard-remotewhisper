@@ -14,6 +14,9 @@ interface AudioRecognizerListener {
     fun decodingStatus(status: InferenceState)
     fun modelLoadingFailed()
 
+    // Inference failed at runtime (e.g. a remote transcription backend hit a network/HTTP error).
+    fun inferenceFailed(reason: String)
+
     fun loading()
     fun needPermission(onResult: (Boolean) -> Unit)
 
