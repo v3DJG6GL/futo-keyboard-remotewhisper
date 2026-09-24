@@ -147,7 +147,8 @@ workflows that exist in the pushed branch, so the other topics are built as part
 Upstream-clean topics carry no workflow files, so pushing them triggers nothing; build one
 with a manual run of the workflow on `main` (Actions tab, `ref` = the topic) or
 `FORGEJO_TOKEN=… fork/ci-dispatch.sh topic/<name>`. `.forgejo/workflows/release.yml` runs
-on `v*-rw.*` tags.
+on `v*-rw.*` tags and then starts `mirror-gh-releases.yml`, which copies the release and its
+APK to the GitHub mirror (the push mirror itself only copies branches and tags).
 
 ### Secrets (Forgejo → repository settings → Actions → Secrets)
 
@@ -157,3 +158,4 @@ on `v*-rw.*` tags.
 | `KEYSTORE_PASSWORD`, `KEY_PASSWORD`, `KEYSTORE_ALIAS` | keystore credentials |
 | `RELEASE_TOKEN` | token with repository write access, to publish releases |
 | `HF_TOKEN` | optional; avoids huggingface rate limits when cloning the swipe model submodule |
+| `GH_MIRROR_TOKEN` | GitHub token that can write releases on the mirror repo (`repo` scope, or fine-grained "Contents: read and write"); lets `mirror-gh-releases.yml` copy releases and APKs to GitHub |
