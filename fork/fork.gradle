@@ -74,6 +74,11 @@ android {
     }
 }
 
+dependencies {
+    // HTTP client of the custom (remote) Whisper server backend.
+    remotewhisperImplementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}
+
 project.logger.lifecycle("fork versionCode = ${forkVersion.code}")
 project.logger.lifecycle("fork versionName = ${forkVersion.name}")
 
