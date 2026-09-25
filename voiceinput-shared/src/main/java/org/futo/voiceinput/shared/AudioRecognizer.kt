@@ -23,6 +23,7 @@ import com.konovalov.vad.config.Mode
 import com.konovalov.vad.config.Model
 import com.konovalov.vad.config.SampleRate
 import com.konovalov.vad.models.VadModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -560,6 +561,21 @@ class AudioRecognizer(
             ).trim()
         }catch(e: InferenceCancelledException) {
             yield()
+            return
+        }catch(e: CancellationException) {
+            yield()
+            throw e
+        }catch(e: Exception) {
+            // A backend (e.g. the remote Whisper API) failed at runtime. Surface it to the user
+            // instead of crashing the inference coroutine.
+            e.printStackTrace()
+            yield()
+            val reason = e.message ?: "Transcription failed"
+            lifecycleScope.launch {
+                withContext(Dispatchers.Main) {
+                    listener.inferenceFailed(reason)
+                }
+            }
             return
         }
 
