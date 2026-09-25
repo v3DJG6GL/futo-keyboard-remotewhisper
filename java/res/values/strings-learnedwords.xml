@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Learned words: words the keyboard remembers from typing (user history) -->
+    <string name="learned_words_title">Learned words</string>
+    <string name="learned_words_subtitle">Review, export, or add learned words to your personal dictionary</string>
+    <string name="learned_words_tip">The keyboard remembers the words you type to improve predictions. Words that are in none of its dictionaries can be added to your personal dictionary, which all keyboards and the spell checker share.</string>
+
+    <string name="learned_words_auto_add">Add new words to personal dictionary</string>
+    <string name="learned_words_auto_add_subtitle">Unknown words you keep typing are added to your personal dictionary automatically</string>
+    <!-- Name of the setting in settings search -->
+    <string name="learned_words_auto_add_uses">Times typed before adding</string>
+    <!-- Slider title; %1$d is the number of times, shown in a monospace font -->
+    <plurals name="learned_words_auto_add_uses_label">
+        <item quantity="one">Add a word once it was typed %1$d time</item>
+        <item quantity="other">Add a word once it was typed %1$d times</item>
+    </plurals>
+    <string name="learned_words_auto_add_uses_subtitle">Words at the start of a sentence are not counted</string>
+    <string name="learned_words_add_on_pick">Add when picked from suggestions</string>
+    <string name="learned_words_add_on_pick_subtitle">Tapping an unknown word you typed in the suggestion bar adds it right away</string>
+    <string name="learned_words_language_only">Ignore language region</string>
+    <string name="learned_words_language_only_subtitle">Save words for the whole language (de) rather than for your region (de_CH), so every variant of the language uses them</string>
+
+    <string name="learned_words_section_adding">Adding words</string>
+    <string name="learned_words_section_yours">Your learned words</string>
+
+    <string name="learned_words_review">Review learned words</string>
+    <string name="learned_words_review_subtitle">Add unknown learned words to your personal dictionary, or delete typos</string>
+    <!-- Slider title; %1$d is the number of times, shown in a monospace font -->
+    <plurals name="learned_words_review_min_uses_label">
+        <item quantity="one">Typed at least %1$d time</item>
+        <item quantity="other">Typed at least %1$d times</item>
+    </plurals>
+    <!-- Button that opens the count filter; %1$d is the minimum number of times -->
+    <plurals name="learned_words_review_min_uses_chip">
+        <item quantity="one">Typed %1$d+ time</item>
+        <item quantity="other">Typed %1$d+ times</item>
+    </plurals>
+    <string name="learned_words_review_min_uses_hint">The dot marks your auto-add setting. Changing that setting moves this filter too.</string>
+    <string name="learned_words_review_filter">Filter learned words…</string>
+    <string name="learned_words_review_filter_clear">Clear filter</string>
+    <string name="learned_words_review_no_match">No learned words match “%1$s”</string>
+    <string name="learned_words_review_no_match_hint">Both “u” and “ue” find “ü”. Try fewer letters, or lower the count.</string>
+    <string name="learned_words_review_change_count">Change count</string>
+    <string name="learned_words_review_sort_most_typed">Most typed</string>
+    <string name="learned_words_review_sort_least_typed">Least typed</string>
+    <string name="learned_words_review_sort_recently_typed">Recently typed</string>
+    <string name="learned_words_review_sort_longest_ago">Longest ago</string>
+    <string name="learned_words_review_sort_a_to_z">A to Z</string>
+    <string name="learned_words_review_sort_z_to_a">Z to A</string>
+    <string name="learned_words_review_sort_hint">Tap the active order again to reverse it</string>
+    <!-- Number of times a word was typed, shown at the end of its row -->
+    <string name="learned_words_review_times">%1$d×</string>
+    <string name="learned_words_review_in_dictionary_count">In your personal dictionary</string>
+    <string name="learned_words_review_loading">Loading learned words…</string>
+    <string name="learned_words_review_read_failed">Could not read the learned words of this language. Open the keyboard once and try again.</string>
+    <string name="learned_words_review_none">No unknown words typed this often. Lower the number above to see more.</string>
+    <!-- Filter: learned words not yet / already in the personal dictionary. Keep short, one line each. -->
+    <string name="learned_words_review_show_new">Not in dictionary</string>
+    <string name="learned_words_review_show_added">In dictionary</string>
+    <string name="learned_words_review_none_in_dictionary">None of the words typed this often are in your personal dictionary yet.</string>
+    <string name="learned_words_review_no_main_dictionary">This language has no main dictionary, so known and unknown words cannot be told apart. All learned words are listed.</string>
+    <string name="learned_words_review_select_all">Select all</string>
+    <plurals name="learned_words_review_word_count">
+        <item quantity="one">%1$d word</item>
+        <item quantity="other">%1$d words</item>
+    </plurals>
+    <string name="learned_words_review_word_uses">Typed about %1$d times, last %2$s</string>
+    <string name="learned_words_review_word_in_dictionary">In your personal dictionary. Typed about %1$d times, last %2$s</string>
+    <!-- Above the action buttons; %1$d = selected words, %2$s = dictionary name, e.g. German (Switzerland) -->
+    <plurals name="learned_words_review_selection">
+        <item quantity="one">%1$d selected. Adding saves it to %2$s.</item>
+        <item quantity="other">%1$d selected. Adding saves them to %2$s.</item>
+    </plurals>
+    <string name="learned_words_review_nothing_selected">Select words to add them to your personal dictionary or to delete them.</string>
+    <string name="learned_words_review_add">Add to dictionary</string>
+    <string name="learned_words_review_delete">Delete</string>
+    <plurals name="learned_words_review_added">
+        <item quantity="one">Added %1$d word to your personal dictionary</item>
+        <item quantity="other">Added %1$d words to your personal dictionary</item>
+    </plurals>
+    <plurals name="learned_words_review_delete_title">
+        <item quantity="one">Delete %1$d learned word?</item>
+        <item quantity="other">Delete %1$d learned words?</item>
+    </plurals>
+    <string name="learned_words_review_delete_body">The keyboard forgets these words and stops suggesting them, until you type them again. Your personal dictionary is not changed.</string>
+    <string name="learned_words_review_delete_cancel">Cancel</string>
+    <plurals name="learned_words_review_deleted">
+        <item quantity="one">Deleted %1$d learned word</item>
+        <item quantity="other">Deleted %1$d learned words</item>
+    </plurals>
+
+    <string name="learned_words_export">Export learned words</string>
+    <string name="learned_words_export_subtitle">Save all learned words of every language to a file</string>
+    <string name="learned_words_export_format_json">JSON</string>
+    <string name="learned_words_export_format_csv">CSV (spreadsheet)</string>
+    <string name="learned_words_export_include_ngrams">Include word sequences</string>
+    <string name="learned_words_export_button">Export</string>
+    <string name="learned_words_export_cancel">Cancel</string>
+    <string name="learned_words_export_done">Exported %1$d learned words</string>
+    <string name="learned_words_export_failed">Export failed: %1$s</string>
+</resources>
