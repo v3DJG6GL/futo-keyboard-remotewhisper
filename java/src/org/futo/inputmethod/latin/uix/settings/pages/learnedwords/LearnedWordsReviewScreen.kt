@@ -42,7 +42,6 @@ import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -143,21 +142,20 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
         }?.let { ReviewState.Loaded(it) } ?: ReviewState.Failed
     }
 
-    val candidates by remember(minUses, showAdded, sort) {
-        derivedStateOf {
-            val loaded = (state as? ReviewState.Loaded)?.result ?: return@derivedStateOf emptyList()
-            sorted(
-                repository.candidatesForPersonalDictionary(loaded, minUses, inPersonalDictionary = showAdded),
-                sort, loaded.locale
-            )
-        }
+    // Plain remember with explicit keys: a derivedStateOf keyed on only some inputs would keep reading
+    // the State object of the first composition and ignore later sort or filter changes.
+    val loaded = (state as? ReviewState.Loaded)?.result
+    val candidates = remember(loaded, minUses, showAdded, sort) {
+        if (loaded == null) emptyList()
+        else sorted(
+            repository.candidatesForPersonalDictionary(loaded, minUses, inPersonalDictionary = showAdded),
+            sort, loaded.locale
+        )
     }
-    val rows by remember(query) {
-        derivedStateOf {
-            candidates.mapNotNull { word -> findInWord(word.word, query.trim())?.let { word to it } }
-        }
+    val rows = remember(candidates, query) {
+        candidates.mapNotNull { word -> findInWord(word.word, query.trim())?.let { word to it } }
     }
-    val selectable by remember { derivedStateOf { rows.map { it.first }.filter { !it.inPersonalDictionary } } }
+    val selectable = remember(rows) { rows.map { it.first }.filter { !it.inPersonalDictionary } }
     // Keep the selection to words that are still shown after a filter changes.
     LaunchedEffect(selectable) {
         val listed = selectable.mapTo(HashSet()) { it.word }
