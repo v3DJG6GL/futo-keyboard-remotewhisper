@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Application and keyboard name of unstable fork builds. -->
+    <string name="fork_app_name" translatable="false">FUTO Keyboard (Remote-Whisper) [Dev Build]</string>
+</resources>
