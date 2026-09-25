@@ -64,8 +64,7 @@
         <item quantity="one">%1$d word</item>
         <item quantity="other">%1$d words</item>
     </plurals>
-    <string name="learned_words_review_word_uses">Typed about %1$d times, last %2$s</string>
-    <string name="learned_words_review_word_in_dictionary">In your personal dictionary. Typed about %1$d times, last %2$s</string>
+    <string name="learned_words_review_word_description">%1$s, typed about %2$d times, last %3$s</string>
     <!-- Above the action buttons; %1$d = selected words, %2$s = dictionary name, e.g. German (Switzerland) -->
     <plurals name="learned_words_review_selection">
         <item quantity="one">%1$d selected. Adding saves it to %2$s.</item>

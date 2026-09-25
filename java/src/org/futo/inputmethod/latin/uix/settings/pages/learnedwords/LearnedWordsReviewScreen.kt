@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -54,6 +56,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -61,13 +64,19 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.state.ToggleableState
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import java.text.Collator
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -90,8 +99,6 @@ import org.futo.inputmethod.latin.uix.settings.ScreenTitle
 import org.futo.inputmethod.latin.uix.settings.Tip
 import org.futo.inputmethod.latin.uix.settings.useDataStore
 import org.futo.inputmethod.latin.uix.settings.useDataStoreValue
-import java.text.Collator
-import java.util.Locale
 
 private sealed interface ReviewState {
     data object Loading : ReviewState
@@ -375,9 +382,9 @@ private fun scrollLabel(word: LearnedWord, sort: LearnedWordsSort, locale: Local
 
 /** Each sort key with its default direction first. */
 private val SORT_PAIRS = listOf(
-    LearnedWordsSort.MostTyped to LearnedWordsSort.LeastTyped,
-    LearnedWordsSort.RecentlyTyped to LearnedWordsSort.LongestAgo,
     LearnedWordsSort.AToZ to LearnedWordsSort.ZToA,
+    LearnedWordsSort.RecentlyTyped to LearnedWordsSort.LongestAgo,
+    LearnedWordsSort.MostTyped to LearnedWordsSort.LeastTyped,
 )
 
 private fun sortLabel(sort: LearnedWordsSort) = when (sort) {
@@ -517,42 +524,80 @@ private fun SelectAllRow(candidates: List<LearnedWord>, selected: SnapshotStateL
 
 @Composable
 private fun CandidateRow(word: LearnedWord, match: IntRange, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    val lastUsed = DateUtils.getRelativeTimeSpanString(
-        word.lastUsed * 1000L, System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS
-    ).toString()
+    val context = LocalContext.current
+    val lastUsed = remember(word.lastUsed) { lastUsedLabel(context, word.lastUsed * 1000L) }
     val added = word.inPersonalDictionary
     val addedLabel = stringResource(R.string.learned_words_review_in_dictionary_count)
+    val description = stringResource(R.string.learned_words_review_word_description, word.word, word.uses, lastUsed)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 56.dp)
             .toggleable(value = checked || added, enabled = !added, role = Role.Checkbox, onValueChange = onCheckedChange)
-            .semantics(mergeDescendants = true) { if (added) stateDescription = addedLabel }
+            .clearAndSetSemantics {
+                contentDescription = description
+                if (added) stateDescription = addedLabel
+            }
             // Room on the right for the scrollbar.
-            .padding(start = 16.dp, end = 28.dp, top = 8.dp, bottom = 8.dp)
+            .padding(start = 16.dp, end = 28.dp)
     ) {
         // Already added: ticked but greyed out, so it reads as done rather than as selected.
         Checkbox(checked = checked || added, onCheckedChange = null, enabled = !added)
         Spacer(Modifier.width(16.dp))
-        Column(Modifier.weight(1f).alpha(if (added) 0.6f else 1f)) {
-            Text(
-                highlighted(word.word, match),
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (added) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                if (added) stringResource(R.string.learned_words_review_word_in_dictionary, word.uses, lastUsed)
-                else stringResource(R.string.learned_words_review_word_uses, word.uses, lastUsed),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+        Text(
+            highlighted(word.word, match),
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (added) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).alpha(if (added) 0.6f else 1f)
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(start = 12.dp).alpha(if (added) 0.6f else 1f)
+        ) {
+            WordTag(lastUsed, Modifier.widthIn(min = 92.dp), MaterialTheme.colorScheme.onSurfaceVariant)
+            WordTag(
+                stringResource(R.string.learned_words_review_times, word.uses),
+                Modifier.widthIn(min = 42.dp),
+                if (added) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary
             )
         }
-        Text(
-            stringResource(R.string.learned_words_review_times, word.uses),
-            fontFamily = FontFamily.Monospace,
-            color = if (added) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 12.dp).alpha(if (added) 0.6f else 1f)
-        )
+    }
+}
+
+/** A small non-interactive label; not a chip, since chips suggest they can be tapped. */
+@Composable
+private fun WordTag(text: String, modifier: Modifier, color: Color) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = color,
+        shape = RoundedCornerShape(6.dp),
+        modifier = modifier.height(26.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 8.dp)) {
+            Text(
+                text,
+                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+                maxLines = 1
+            )
+        }
+    }
+}
+
+/**
+ * When a word was last typed: the time for today, the full date otherwise. Both follow the
+ * device's regional settings (and its 24-hour switch); the date always has a four-digit year.
+ */
+private fun lastUsedLabel(context: Context, millis: Long): String {
+    val date = Date(millis)
+    return if (DateUtils.isToday(millis)) {
+        android.text.format.DateFormat.getTimeFormat(context).format(date)
+    } else {
+        val locale = context.resources.configuration.locales[0]
+        val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "ddMMyyyy")
+        SimpleDateFormat(pattern, locale).format(date)
     }
 }
 
