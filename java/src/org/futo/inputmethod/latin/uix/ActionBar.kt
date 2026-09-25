@@ -524,6 +524,28 @@ fun RowScope.SuggestionItems(words: SuggestedWords, onClick: (i: Int) -> Unit, o
             }
         }
 
+        // The cursor went back into a word: offer that word as typed in the middle, so a word
+        // that is in no dictionary can still be picked, and thereby learned.
+        layout.verbatimWord != null && words.mInputStyle == SuggestedWords.INPUT_STYLE_RECORRECTION -> {
+            if(layout.emojiMatches.isEmpty()) {
+                suggestionItem(layout.sortedMatches.getOrNull(1))
+            } else {
+                suggestionItem(layout.emojiMatches[0])
+            }
+            SuggestionSeparator()
+            SuggestionItem(
+                words,
+                words.indexOf(layout.verbatimWord),
+                isPrimary = true,
+                forcePrimary = true,
+                onClick = { onClick(words.indexOf(layout.verbatimWord)) },
+                onLongClick = { onLongClick(words.indexOf(layout.verbatimWord)) },
+                isEmoji = false
+            )
+            SuggestionSeparator()
+            suggestionItem(layout.sortedMatches.getOrNull(0))
+        }
+
         else -> {
             var supplementalSuggestionIndex = 1
             if(layout.emojiMatches.isEmpty()) {
