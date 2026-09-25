@@ -20,6 +20,9 @@
     <string name="learned_words_language_only">Ignore language region</string>
     <string name="learned_words_language_only_subtitle">Save words for the whole language (de) rather than for your region (de_CH), so every variant of the language uses them</string>
 
+    <string name="learned_words_section_adding">Adding words</string>
+    <string name="learned_words_section_yours">Your learned words</string>
+
     <string name="learned_words_review">Review learned words</string>
     <string name="learned_words_review_subtitle">Add unknown learned words to your personal dictionary, or delete typos</string>
     <!-- Slider title; %1$d is the number of times, shown in a monospace font -->
@@ -27,6 +30,27 @@
         <item quantity="one">Typed at least %1$d time</item>
         <item quantity="other">Typed at least %1$d times</item>
     </plurals>
+    <!-- Button that opens the count filter; %1$d is the minimum number of times -->
+    <plurals name="learned_words_review_min_uses_chip">
+        <item quantity="one">Typed %1$d+ time</item>
+        <item quantity="other">Typed %1$d+ times</item>
+    </plurals>
+    <string name="learned_words_review_min_uses_hint">The dot marks your auto-add setting. Changing that setting moves this filter too.</string>
+    <string name="learned_words_review_filter">Filter learned words…</string>
+    <string name="learned_words_review_filter_clear">Clear filter</string>
+    <string name="learned_words_review_no_match">No learned words match “%1$s”</string>
+    <string name="learned_words_review_no_match_hint">Both “u” and “ue” find “ü”. Try fewer letters, or lower the count.</string>
+    <string name="learned_words_review_change_count">Change count</string>
+    <string name="learned_words_review_sort_most_typed">Most typed</string>
+    <string name="learned_words_review_sort_least_typed">Least typed</string>
+    <string name="learned_words_review_sort_recently_typed">Recently typed</string>
+    <string name="learned_words_review_sort_longest_ago">Longest ago</string>
+    <string name="learned_words_review_sort_a_to_z">A to Z</string>
+    <string name="learned_words_review_sort_z_to_a">Z to A</string>
+    <string name="learned_words_review_sort_hint">Tap the active order again to reverse it</string>
+    <!-- Number of times a word was typed, shown at the end of its row -->
+    <string name="learned_words_review_times">%1$d×</string>
+    <string name="learned_words_review_in_dictionary_count">In your personal dictionary</string>
     <string name="learned_words_review_loading">Loading learned words…</string>
     <string name="learned_words_review_read_failed">Could not read the learned words of this language. Open the keyboard once and try again.</string>
     <string name="learned_words_review_none">No unknown words typed this often. Lower the number above to see more.</string>

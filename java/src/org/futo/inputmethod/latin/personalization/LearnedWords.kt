@@ -3,6 +3,7 @@ package org.futo.inputmethod.latin.personalization
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.serialization.Serializable
 import org.futo.inputmethod.latin.localeFromString
 import org.futo.inputmethod.latin.uix.SettingsKey
@@ -37,6 +38,31 @@ val LearnedWordsStoreLanguageOnly = SettingsKey(
     key = booleanPreferencesKey("learned_words_store_language_only"),
     default = false
 )
+
+/**
+ * The review screen's "typed at least" filter. It follows [LearnedWordsAutoAddUses] until changed
+ * on the review screen; [LearnedWordsReviewMinUsesBase] records the auto-add value it was changed
+ * against, so changing the auto-add setting later moves the filter along again.
+ */
+val LearnedWordsReviewMinUses = SettingsKey(
+    key = intPreferencesKey("learned_words_review_min_uses"),
+    default = 0
+)
+val LearnedWordsReviewMinUsesBase = SettingsKey(
+    key = intPreferencesKey("learned_words_review_min_uses_base"),
+    default = 0
+)
+
+fun reviewMinUses(stored: Int, base: Int, autoAddUses: Int): Int =
+    if (stored > 0 && base == autoAddUses) stored else autoAddUses
+
+/** Sort order of the review screen, a [LearnedWordsSort] name. */
+val LearnedWordsReviewSort = SettingsKey(
+    key = stringPreferencesKey("learned_words_review_sort"),
+    default = "MostTyped"
+)
+
+enum class LearnedWordsSort { MostTyped, LeastTyped, RecentlyTyped, LongestAgo, AToZ, ZToA }
 
 const val LEARNED_WORDS_PERSONAL_DICTIONARY_FREQUENCY = 250
 

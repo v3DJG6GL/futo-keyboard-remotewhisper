@@ -65,10 +65,14 @@ val LearnedWordsMenu = UserSettingsMenu(
         userSettingDecorationOnly {
             Tip(stringResource(R.string.learned_words_tip))
         },
+        userSettingDecorationOnly {
+            SectionLabel(stringResource(R.string.learned_words_section_adding))
+        },
         userSettingToggleDataStore(
             title = R.string.learned_words_auto_add,
             subtitle = R.string.learned_words_auto_add_subtitle,
-            setting = LearnedWordsAutoAddSetting
+            setting = LearnedWordsAutoAddSetting,
+            icon = settingIcon(R.drawable.learned_words_auto_add)
         ),
         UserSetting(
             name = R.string.learned_words_auto_add_uses,
@@ -80,24 +84,31 @@ val LearnedWordsMenu = UserSettingsMenu(
                 value = uses.value,
                 range = 2..10,
                 onValueChange = { uses.setValue(it) },
-                subtitle = stringResource(R.string.learned_words_auto_add_uses_subtitle)
+                subtitle = stringResource(R.string.learned_words_auto_add_uses_subtitle),
+                icon = R.drawable.learned_words_repeat
             )
         },
         userSettingToggleDataStore(
             title = R.string.learned_words_add_on_pick,
             subtitle = R.string.learned_words_add_on_pick_subtitle,
-            setting = LearnedWordsAddOnManualPick
+            setting = LearnedWordsAddOnManualPick,
+            icon = settingIcon(R.drawable.learned_words_tap)
         ).copy(visibilityCheck = autoAddEnabled),
         userSettingToggleDataStore(
             title = R.string.learned_words_language_only,
             subtitle = R.string.learned_words_language_only_subtitle,
-            setting = LearnedWordsStoreLanguageOnly
+            setting = LearnedWordsStoreLanguageOnly,
+            icon = settingIcon(R.drawable.globe)
         ),
+        userSettingDecorationOnly {
+            SectionLabel(stringResource(R.string.learned_words_section_yours))
+        },
         userSettingNavigationItem(
             title = R.string.learned_words_review,
             subtitle = R.string.learned_words_review_subtitle,
             style = NavigationItemStyle.Misc,
-            navigateTo = LEARNED_WORDS_REVIEW_NAV_PATH
+            navigateTo = LEARNED_WORDS_REVIEW_NAV_PATH,
+            icon = R.drawable.learned_words_review
         ),
         UserSetting(name = R.string.learned_words_export) {
             LearnedWordsExportItem()
