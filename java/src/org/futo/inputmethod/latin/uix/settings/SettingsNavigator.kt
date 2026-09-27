@@ -50,6 +50,8 @@ import org.futo.inputmethod.latin.uix.settings.pages.NumberRowSettingMenu
 import org.futo.inputmethod.latin.uix.settings.pages.PaymentScreen
 import org.futo.inputmethod.latin.uix.settings.pages.PaymentThankYouScreen
 import org.futo.inputmethod.latin.uix.settings.pages.PredictiveTextMenu
+import org.futo.inputmethod.latin.uix.settings.pages.learnedwords.LearnedWordsMenu
+import org.futo.inputmethod.latin.uix.settings.pages.learnedwords.addLearnedWordsNavigation
 import org.futo.inputmethod.latin.uix.settings.pages.ProjectInfoView
 import org.futo.inputmethod.latin.uix.settings.pages.ResizeMenuLite
 import org.futo.inputmethod.latin.uix.settings.pages.ResizeScreen
@@ -104,6 +106,7 @@ val SettingsMenus = listOf(
     LongPressMenu,
     SwipeMenu,
     PredictiveTextMenu,
+    LearnedWordsMenu,
     BlacklistScreenLite,
     VoiceInputMenu,
     ActionsScreen,
@@ -196,6 +199,7 @@ fun SettingsNavigator(
                 CustomThemeDialog(navController = navController)
             }
             addModelManagerNavigation(navController)
+            addLearnedWordsNavigation(navController)
         }
     }
 }
