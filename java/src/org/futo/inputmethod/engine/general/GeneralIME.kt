@@ -36,6 +36,7 @@ import org.futo.inputmethod.latin.Subtypes.switchToNextLanguage
 import org.futo.inputmethod.latin.SuggestedWords
 import org.futo.inputmethod.latin.SuggestedWords.SuggestedWordInfo
 import org.futo.inputmethod.latin.SuggestionBlacklist
+import org.futo.inputmethod.latin.personalization.PersonalDictionaryAutoAdd
 import org.futo.inputmethod.latin.WordComposer
 import org.futo.inputmethod.latin.common.Constants
 import org.futo.inputmethod.latin.common.InputPointers
@@ -130,6 +131,10 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
         suggestedWordsCallback = this
     )
 
+    private val personalDictionaryAutoAdd = PersonalDictionaryAutoAdd(
+        context, dictionaryFacilitator, helper.lifecycleScope
+    )
+
     override fun addToHistory(
         word: String,
         wasCapitalized: Boolean,
@@ -146,6 +151,7 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             ngramContext, timestamp,
             blockOffensive
         )
+        personalDictionaryAutoAdd.onWordLearned(word, wasCapitalized, importance)
 
         if (settings.current.mTransformerPredictionEnabled) {
             languageModelFacilitator.addToHistory(
