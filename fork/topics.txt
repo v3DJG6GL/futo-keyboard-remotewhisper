@@ -11,6 +11,7 @@
 
 topic/dict-recorrection-fix   @base
 topic/dict-learned-words      @base
+topic/dict-capitalized-forms  topic/dict-learned-words
 topic/fork-base               @base
 topic/whisper-backend         topic/fork-base
 topic/ci                      topic/fork-base
