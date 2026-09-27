@@ -253,11 +253,22 @@ public class SuggestedWords {
         return candidate;
     }
 
-    public SuggestedWords copyWithoutWord(String word) {
+    // Builds the suggestions to show when the cursor is moved back into a word for which these
+    // suggestions were remembered. The word currently in the text field is presented first as
+    // the verbatim (KIND_TYPED) entry, so that it can still be picked (and thereby learned) even
+    // though it's not in any dictionary; the remembered alternatives follow as corrections.
+    public SuggestedWords copyForRecorrection(String typedWord) {
         ArrayList<SuggestedWordInfo> newList = new ArrayList<>();
+        final SuggestedWordInfo typedWordInfo = new SuggestedWordInfo(typedWord,
+                "" /* prevWordsContext */, SuggestedWordInfo.MAX_SCORE,
+                SuggestedWordInfo.KIND_TYPED, Dictionary.DICTIONARY_USER_TYPED,
+                SuggestedWordInfo.NOT_AN_INDEX /* indexOfTouchPointOfSecondWord */,
+                SuggestedWordInfo.NOT_A_CONFIDENCE /* autoCommitFirstWordConfidence */);
+        newList.add(typedWordInfo);
+
         for(int i=0; i<mSuggestedWordInfoList.size(); i++) {
             SuggestedWordInfo info = mSuggestedWordInfoList.get(i);
-            if(info.mWord.equals(word)) continue;
+            if(info.mWord.equals(typedWord)) continue;
 
             SuggestedWordInfo copy = new SuggestedWordInfo(
                     info.mWord, "",
@@ -271,7 +282,11 @@ public class SuggestedWords {
             newList.add(copy);
         }
 
-        return new SuggestedWords(newList, new ArrayList<>(), null, false, false, false, 0, 0);
+        // The typed word is treated as valid and nothing auto-corrects: the user deliberately
+        // moved back into this word, so a separator must not replace it again.
+        return new SuggestedWords(newList, new ArrayList<>(), typedWordInfo,
+                true /* typedWordValid */, false /* willAutoCorrect */,
+                false /* isObsoleteSuggestions */, INPUT_STYLE_RECORRECTION, 0);
     }
 
     // non-final for testability.
