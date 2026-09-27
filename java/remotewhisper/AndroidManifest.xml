@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fork manifest overlay, merged into java/AndroidManifest.xml for the remotewhisper flavor. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:label="@string/fork_app_name"
+        tools:replace="android:label">
+
+        <service
+            android:name="org.futo.inputmethod.latin.LatinIME"
+            android:label="@string/fork_app_name"
+            tools:replace="android:label" />
+    </application>
+</manifest>
