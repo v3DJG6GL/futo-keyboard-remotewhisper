@@ -71,6 +71,7 @@ import org.futo.inputmethod.latin.uix.settings.pages.themes.CustomThemeDialog
 import org.futo.inputmethod.latin.uix.settings.pages.themes.CustomThemeScreen
 import org.futo.inputmethod.latin.uix.settings.pages.themes.DeleteCustomThemeDialog
 import org.futo.inputmethod.latin.uix.settings.pages.themes.ThemeScreen
+import org.futo.inputmethod.latin.fork.whisper.CustomWhisperServerMenu // fork: remote Whisper
 
 // Utility function for quick error messages
 fun NavHostController.navigateToError(title: String, body: String) {
@@ -109,6 +110,7 @@ val SettingsMenus = listOf(
     LearnedWordsMenu,
     BlacklistScreenLite,
     VoiceInputMenu,
+    CustomWhisperServerMenu, // fork: remote Whisper
     ActionsScreen,
     HelpMenu,
     MiscMenu,

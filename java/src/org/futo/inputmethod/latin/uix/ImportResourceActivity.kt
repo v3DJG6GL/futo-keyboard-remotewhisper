@@ -72,6 +72,7 @@ import org.futo.inputmethod.latin.utils.Dictionaries
 import org.futo.inputmethod.latin.utils.SubtypeLocaleUtils
 import org.futo.inputmethod.latin.utils.ZipFileHelper
 import org.futo.inputmethod.latin.xlm.ModelPaths
+import org.futo.inputmethod.latin.fork.whisper.RemoteVoiceInput // fork: remote Whisper
 import org.futo.inputmethod.updates.openURI
 import org.futo.voiceinput.shared.BUILTIN_ENGLISH_MODEL
 import org.futo.voiceinput.shared.types.ModelFileFile
@@ -569,6 +570,7 @@ object ResourceHelper {
     }
 
     fun tryFindingVoiceInputModelForLocale(context: Context, locale: Locale): ModelLoader? {
+        RemoteVoiceInput.modelFor(context, locale)?.let { return it } // fork: remote Whisper
         val file = runBlocking { findFileForKind(context, locale, FileKind.VoiceInput) }
             ?: return BuiltInVoiceInputFallbacks[locale.language]
 
@@ -598,6 +600,7 @@ object ResourceHelper {
 
         runBlocking { context.setSetting(kind.preferenceKeyFor(locale.toString()), "") }
         runBlocking { context.setSetting(kind.namePreferenceKeyFor(locale.toString()), "") }
+        RemoteVoiceInput.onResourceDeleted(context, kind, locale) // fork: remote Whisper
 
         GlobalIMEMessage.tryEmit(IMEMessage.ReloadResources)
     }
