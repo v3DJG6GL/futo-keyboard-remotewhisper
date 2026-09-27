@@ -813,15 +813,28 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
             Dictionary.TYPE_USER
     };
 
+    private static final String[] MAIN_AND_CONTACTS_DICTIONARY_TYPES = new String[] {
+            Dictionary.TYPE_MAIN,
+            Dictionary.TYPE_CONTACTS
+    };
+
+    private static final String[] MAIN_DICTIONARY_TYPE = new String[] { Dictionary.TYPE_MAIN };
+
     @Override
-    public void unlearnCapitalizedForm(final String word) {
+    public void unlearnCapitalizedForm(final String word, final boolean evenIfInPersonalDictionary) {
         if (TextUtils.isEmpty(word)) return;
         final Locale locale = getMostConfidentLocale();
         final String capitalized = StringUtils.capitalizeFirstCodePoint(word, locale);
         if (capitalized.equals(word)) return;
-        if (isValidWord(capitalized, DICTIONARY_TYPES_EXCEPT_USER_HISTORY)) return;
+        if (isValidWord(capitalized, evenIfInPersonalDictionary
+                ? MAIN_AND_CONTACTS_DICTIONARY_TYPES : DICTIONARY_TYPES_EXCEPT_USER_HISTORY)) return;
         removeWord(Dictionary.TYPE_USER_HISTORY, capitalized);
         putWordIntoValidSpellingWordCache("unlearnCapitalizedForm", word);
+    }
+
+    @Override
+    public boolean isValidMainDictionaryWord(final String word) {
+        return isValidWord(word, MAIN_DICTIONARY_TYPE);
     }
 
     @NonNull

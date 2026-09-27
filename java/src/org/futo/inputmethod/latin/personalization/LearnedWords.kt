@@ -42,6 +42,15 @@ val LearnedWordsUnlearnCapitalizedOnPick = SettingsKey(
     default = false
 )
 
+/**
+ * With [LearnedWordsUnlearnCapitalizedOnPick], also delete the capitalized form from the personal
+ * dictionary when the main dictionary knows the picked lower-case word but not that form.
+ */
+val LearnedWordsUnlearnCapitalizedInPersonalDictionary = SettingsKey(
+    key = booleanPreferencesKey("learned_words_unlearn_capitalized_in_personal_dictionary"),
+    default = false
+)
+
 /** Store added words for the language only (e.g. de instead of de_CH). */
 val LearnedWordsStoreLanguageOnly = SettingsKey(
     key = booleanPreferencesKey("learned_words_store_language_only"),

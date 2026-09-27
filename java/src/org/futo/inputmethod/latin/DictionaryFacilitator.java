@@ -168,9 +168,12 @@ public interface DictionaryFacilitator {
 
     /**
      * Forgets the learned capitalized form of the lower-case [word] ("Ich" for "ich") unless the
-     * main, contacts or personal dictionary knows that form.
+     * main or contacts dictionary knows that form, or the personal dictionary does and
+     * [evenIfInPersonalDictionary] is false.
      */
-    void unlearnCapitalizedForm(final String word);
+    void unlearnCapitalizedForm(final String word, final boolean evenIfInPersonalDictionary);
+
+    boolean isValidMainDictionaryWord(final String word);
 
 
     @Nonnull ArrayList<Integer> getValidNextCodePoints(final ComposedData composedData);

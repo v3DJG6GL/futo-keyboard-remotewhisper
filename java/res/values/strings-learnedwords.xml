@@ -23,6 +23,9 @@
     <string name="learned_words_unlearn_capitalized">Forget capitalized form when picking lower case</string>
     <string name="learned_words_unlearn_capitalized_subtitle">Picking “ich” from the suggestion bar makes the keyboard forget a learned “Ich”. Forms your dictionaries or contacts know are kept.</string>
 
+    <string name="learned_words_unlearn_capitalized_personal">Also in the personal dictionary</string>
+    <string name="learned_words_unlearn_capitalized_personal_subtitle">Also deletes “Ich” from your personal dictionary when the keyboard’s dictionary has only “ich”. Other keyboards share that dictionary.</string>
+
     <string name="learned_words_section_adding">Adding words</string>
     <string name="learned_words_section_yours">Your learned words</string>
 
