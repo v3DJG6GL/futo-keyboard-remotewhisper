@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Permits cleartext (http://) traffic so users can point the optional custom Whisper API backend
+  at a self-hosted server on their LAN, which typically has no TLS certificate. Because the
+  endpoint is user-defined, the host is not known ahead of time and cannot be pinned per-domain,
+  so cleartext is permitted in the base config. The voice input settings show a warning that audio
+  is sent unencrypted over http://.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

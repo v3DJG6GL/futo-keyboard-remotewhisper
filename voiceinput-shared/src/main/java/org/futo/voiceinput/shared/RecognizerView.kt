@@ -90,6 +90,7 @@ class RecognizerView(
 
     private val loadingCircleText = mutableStateOf("")
     private val partialDecodingText = mutableStateOf("")
+    private val inferenceErrorText = mutableStateOf<String?>(null)
     private val currentViewState = mutableStateOf(CurrentView.LoadingCircle)
 
     private val currentDeviceState = mutableStateOf(MicrophoneDeviceState(
@@ -142,7 +143,7 @@ class RecognizerView(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() })) {
                     Text(
-                        stringResource(R.string.model_load_error),
+                        inferenceErrorText.value ?: stringResource(R.string.model_load_error),
                         modifier = Modifier
                             .align(Alignment.Center)
                             .padding(8.dp), textAlign = TextAlign.Center)
@@ -173,6 +174,12 @@ class RecognizerView(
         }
 
         override fun modelLoadingFailed() {
+            listener.cancelled()
+            currentViewState.value = CurrentView.ModelError
+        }
+
+        override fun inferenceFailed(reason: String) {
+            inferenceErrorText.value = reason
             listener.cancelled()
             currentViewState.value = CurrentView.ModelError
         }
