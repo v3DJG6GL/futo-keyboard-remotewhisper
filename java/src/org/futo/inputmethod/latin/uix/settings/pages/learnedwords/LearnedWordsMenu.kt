@@ -40,6 +40,7 @@ import org.futo.inputmethod.latin.personalization.LearnedWordsAutoAddUses
 import org.futo.inputmethod.latin.personalization.LearnedWordsExporter
 import org.futo.inputmethod.latin.personalization.LearnedWordsRepository
 import org.futo.inputmethod.latin.personalization.LearnedWordsStoreLanguageOnly
+import org.futo.inputmethod.latin.personalization.LearnedWordsUnlearnCapitalizedOnPick
 import org.futo.inputmethod.latin.personalization.userHistoryDictionaryLocales
 import org.futo.inputmethod.latin.uix.settings.NavigationItem
 import org.futo.inputmethod.latin.uix.settings.NavigationItemStyle
@@ -103,6 +104,12 @@ val LearnedWordsMenu = UserSettingsMenu(
         userSettingDecorationOnly {
             SectionLabel(stringResource(R.string.learned_words_section_yours))
         },
+        userSettingToggleDataStore(
+            title = R.string.learned_words_unlearn_capitalized,
+            subtitle = R.string.learned_words_unlearn_capitalized_subtitle,
+            setting = LearnedWordsUnlearnCapitalizedOnPick,
+            icon = settingIcon(R.drawable.learned_words_case)
+        ),
         userSettingNavigationItem(
             title = R.string.learned_words_review,
             subtitle = R.string.learned_words_review_subtitle,

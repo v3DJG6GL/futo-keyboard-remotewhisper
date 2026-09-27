@@ -166,6 +166,12 @@ public interface DictionaryFacilitator {
             @Nonnull final NgramContext ngramContext, final long timeStampInSeconds,
             final int eventType);
 
+    /**
+     * Forgets the learned capitalized form of the lower-case [word] ("Ich" for "ich") unless the
+     * main, contacts or personal dictionary knows that form.
+     */
+    void unlearnCapitalizedForm(final String word);
+
 
     @Nonnull ArrayList<Integer> getValidNextCodePoints(final ComposedData composedData);
 
