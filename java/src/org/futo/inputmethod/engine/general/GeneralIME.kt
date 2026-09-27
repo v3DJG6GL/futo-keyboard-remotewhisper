@@ -36,6 +36,7 @@ import org.futo.inputmethod.latin.Subtypes.switchToNextLanguage
 import org.futo.inputmethod.latin.SuggestedWords
 import org.futo.inputmethod.latin.SuggestedWords.SuggestedWordInfo
 import org.futo.inputmethod.latin.SuggestionBlacklist
+import org.futo.inputmethod.latin.personalization.LearnedWordsUnlearnCapitalizedOnPick
 import org.futo.inputmethod.latin.personalization.PersonalDictionaryAutoAdd
 import org.futo.inputmethod.latin.WordComposer
 import org.futo.inputmethod.latin.common.Constants
@@ -152,6 +153,10 @@ class GeneralIME(val helper: IMEHelper) : IMEInterface, WordLearner, SuggestionS
             blockOffensive
         )
         personalDictionaryAutoAdd.onWordLearned(word, wasCapitalized, importance)
+        if (importance >= PersonalDictionaryAutoAdd.STRIP_PICK_IMPORTANCE &&
+                context.getSetting(LearnedWordsUnlearnCapitalizedOnPick)) {
+            dictionaryFacilitator.unlearnCapitalizedForm(word)
+        }
 
         if (settings.current.mTransformerPredictionEnabled) {
             languageModelFacilitator.addToHistory(

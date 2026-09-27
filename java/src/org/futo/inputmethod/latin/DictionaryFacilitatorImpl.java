@@ -740,7 +740,11 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
         }
         final String lowerCasedWord = word.toLowerCase(dictionaryGroup.mLocale);
         final String secondWord;
-        if (wasAutoCapitalized) {
+        // A capital at the start of a sentence says nothing about the word, whether auto-caps or
+        // the user put it there (manual shift, or an app without auto-caps). Otherwise words like
+        // "Ich", whose lower-case form is below CAPITALIZED_FORM_MAX_PROBABILITY_FOR_INSERT, are
+        // learned as a word of their own and then win over the lower-case form mid-sentence.
+        if (wasAutoCapitalized || ngramContext.isBeginningOfSentenceContext()) {
             if (isValidSuggestionWord(word) && !isValidSuggestionWord(lowerCasedWord)) {
                 // If the word was auto-capitalized and exists only as a capitalized word in the
                 // dictionary, then we must not downcase it before registering it. For example,
@@ -801,6 +805,23 @@ public class DictionaryFacilitatorImpl implements DictionaryFacilitator {
         // Update the spelling cache after unlearning. Words that are removed from user history
         // and appear in no other language model are not considered valid.
         putWordIntoValidSpellingWordCache("unlearnFromUserHistory", word.toLowerCase());
+    }
+
+    private static final String[] DICTIONARY_TYPES_EXCEPT_USER_HISTORY = new String[] {
+            Dictionary.TYPE_MAIN,
+            Dictionary.TYPE_CONTACTS,
+            Dictionary.TYPE_USER
+    };
+
+    @Override
+    public void unlearnCapitalizedForm(final String word) {
+        if (TextUtils.isEmpty(word)) return;
+        final Locale locale = getMostConfidentLocale();
+        final String capitalized = StringUtils.capitalizeFirstCodePoint(word, locale);
+        if (capitalized.equals(word)) return;
+        if (isValidWord(capitalized, DICTIONARY_TYPES_EXCEPT_USER_HISTORY)) return;
+        removeWord(Dictionary.TYPE_USER_HISTORY, capitalized);
+        putWordIntoValidSpellingWordCache("unlearnCapitalizedForm", word);
     }
 
     @NonNull

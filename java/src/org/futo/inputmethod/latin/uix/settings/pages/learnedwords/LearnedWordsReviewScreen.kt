@@ -110,7 +110,8 @@ private val MIN_USES_RANGE = 1..20
 
 /**
  * Lists the unknown words the keyboard learned for a language. Selected words can be added to the
- * personal dictionary or deleted from the learned words (typos). Alternatively lists the learned
+ * personal dictionary or deleted from the learned words (typos). Capitalized forms of known words
+ * ("Ich" next to "ich") are listed too, marked, and can only be deleted. Alternatively lists the learned
  * words that are already in the personal dictionary, dimmed and not selectable. The list can be
  * filtered by text and by how often a word was typed, and sorted.
  */
@@ -306,6 +307,7 @@ fun LearnedWordsReviewScreen(navController: NavHostController) {
                         if (!showAdded) {
                             ActionBar(
                                 selectedCount = selected.size,
+                                canAdd = rows.none { (word, _) -> word.capitalizedFormOfKnownWord && word.word in selected },
                                 targetDictionary = targetDictionary,
                                 onDelete = { confirmDelete = true },
                                 onAdd = {
@@ -528,7 +530,8 @@ private fun CandidateRow(word: LearnedWord, match: IntRange, checked: Boolean, o
     val lastUsed = remember(word.lastUsed) { lastUsedLabel(context, word.lastUsed * 1000L) }
     val added = word.inPersonalDictionary
     val addedLabel = stringResource(R.string.learned_words_review_in_dictionary_count)
-    val description = stringResource(R.string.learned_words_review_word_description, word.word, word.uses, lastUsed)
+    val description = stringResource(R.string.learned_words_review_word_description, word.word, word.uses, lastUsed) +
+        if (word.capitalizedFormOfKnownWord) ", " + stringResource(R.string.learned_words_review_capitalized_description) else ""
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -557,6 +560,9 @@ private fun CandidateRow(word: LearnedWord, match: IntRange, checked: Boolean, o
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             modifier = Modifier.padding(start = 12.dp).alpha(if (added) 0.6f else 1f)
         ) {
+            if (word.capitalizedFormOfKnownWord) {
+                WordTag(stringResource(R.string.learned_words_review_capitalized_tag), Modifier, MaterialTheme.colorScheme.error)
+            }
             WordTag(lastUsed, Modifier.widthIn(min = 92.dp), MaterialTheme.colorScheme.onSurfaceVariant)
             WordTag(
                 stringResource(R.string.learned_words_review_times, word.uses),
@@ -604,6 +610,7 @@ private fun lastUsedLabel(context: Context, millis: Long): String {
 @Composable
 private fun ActionBar(
     selectedCount: Int,
+    canAdd: Boolean,
     targetDictionary: String,
     onDelete: () -> Unit,
     onAdd: () -> Unit,
@@ -613,6 +620,8 @@ private fun ActionBar(
             Text(
                 if (selectedCount == 0) {
                     stringResource(R.string.learned_words_review_nothing_selected)
+                } else if (!canAdd) {
+                    stringResource(R.string.learned_words_review_capitalized_selected)
                 } else {
                     pluralStringResource(R.plurals.learned_words_review_selection, selectedCount, selectedCount, targetDictionary)
                 },
@@ -628,7 +637,7 @@ private fun ActionBar(
                     modifier = Modifier.weight(1f)
                 ) { Text(stringResource(R.string.learned_words_review_delete)) }
                 Button(
-                    enabled = selectedCount > 0,
+                    enabled = selectedCount > 0 && canAdd,
                     onClick = onAdd,
                     modifier = Modifier.weight(1.4f)
                 ) { Text(stringResource(R.string.learned_words_review_add)) }

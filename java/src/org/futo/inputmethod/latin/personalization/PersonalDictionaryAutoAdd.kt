@@ -84,6 +84,9 @@ class PersonalDictionaryAutoAdd(
     companion object {
         private const val TAG = "PersonalDictAutoAdd"
 
+        /** Lowest importance InputLogic passes for a word picked from the suggestion strip. */
+        const val STRIP_PICK_IMPORTANCE = 1
+
         /** Importance InputLogic passes when the typed word itself was picked from the strip. */
         const val MANUAL_PICK_IMPORTANCE = 3
 

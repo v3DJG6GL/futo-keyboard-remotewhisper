@@ -33,6 +33,15 @@ val LearnedWordsAddOnManualPick = SettingsKey(
     default = true
 )
 
+/**
+ * Picking the lower-case form of a word from the suggestion strip forgets its learned capitalized
+ * form ("Ich" when "ich" is picked), unless a dictionary knows that form.
+ */
+val LearnedWordsUnlearnCapitalizedOnPick = SettingsKey(
+    key = booleanPreferencesKey("learned_words_unlearn_capitalized_on_pick"),
+    default = false
+)
+
 /** Store added words for the language only (e.g. de instead of de_CH). */
 val LearnedWordsStoreLanguageOnly = SettingsKey(
     key = booleanPreferencesKey("learned_words_store_language_only"),
@@ -87,6 +96,11 @@ data class LearnedWord(
     /** Known to the main, personal or contacts dictionary; null when that could not be checked. */
     val known: Boolean?,
     val inPersonalDictionary: Boolean,
+    /**
+     * Only the lower-case form is known ("Ich" learned, "ich" in the dictionary). Such an entry
+     * competes with the known word, so it is listed for deleting rather than for adding.
+     */
+    val capitalizedFormOfKnownWord: Boolean = false,
     /** Recorded sequences whose context ends with this word. */
     val ngrams: List<LearnedNgram> = emptyList(),
 ) {
