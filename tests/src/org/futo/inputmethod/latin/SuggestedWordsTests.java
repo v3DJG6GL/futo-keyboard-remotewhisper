@@ -17,8 +17,10 @@
 package org.futo.inputmethod.latin;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -182,5 +184,49 @@ public class SuggestedWordsTests {
         assertNull(emptySuggestedWords.getTypedWordInfoOrNull());
 
         assertNull(SuggestedWords.getEmptyInstance().getTypedWordInfoOrNull());
+    }
+
+    @Test
+    public void testCopyForRecorrectionPrependsTypedWordAndDropsDuplicate() {
+        final SuggestedWords remembered = new SuggestedWords(
+                createCorrectionWordInfos("alpha", "typed", "beta"), null /* rawSuggestions */,
+                null /* typedWord */,
+                false /* typedWordValid */,
+                true /* willAutoCorrect */,
+                false /* isObsoleteSuggestions */,
+                SuggestedWords.INPUT_STYLE_TYPING,
+                SuggestedWords.NOT_A_SEQUENCE_NUMBER);
+
+        final SuggestedWords words = remembered.copyForRecorrection("typed");
+
+        assertEquals(3, words.size());
+        assertEquals("typed", words.getWord(0));
+        assertTrue(words.getInfo(0).isKindOf(SuggestedWordInfo.KIND_TYPED));
+        assertEquals("alpha", words.getWord(1));
+        assertEquals("beta", words.getWord(2));
+        assertNotNull(words.getTypedWordInfoOrNull());
+        assertEquals("typed", words.getTypedWordInfoOrNull().mWord);
+        assertTrue(words.mTypedWordValid);
+        assertFalse(words.mWillAutoCorrect);
+        assertEquals(SuggestedWords.INPUT_STYLE_RECORRECTION, words.mInputStyle);
+    }
+
+    @Test
+    public void testCopyForRecorrectionWhenTypedWordNotRemembered() {
+        final SuggestedWords remembered = new SuggestedWords(
+                createCorrectionWordInfos("alpha"), null /* rawSuggestions */,
+                null /* typedWord */,
+                false /* typedWordValid */,
+                true /* willAutoCorrect */,
+                false /* isObsoleteSuggestions */,
+                SuggestedWords.INPUT_STYLE_TYPING,
+                SuggestedWords.NOT_A_SEQUENCE_NUMBER);
+
+        final SuggestedWords words = remembered.copyForRecorrection("zwurbelix");
+
+        assertEquals(2, words.size());
+        assertEquals("zwurbelix", words.getWord(0));
+        assertTrue(words.getInfo(0).isKindOf(SuggestedWordInfo.KIND_TYPED));
+        assertEquals("alpha", words.getWord(1));
     }
 }
