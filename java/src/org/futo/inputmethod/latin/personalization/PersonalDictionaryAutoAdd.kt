@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.futo.inputmethod.latin.DictionaryFacilitator
 import org.futo.inputmethod.latin.UserHistoryDictionaryReader
+import org.futo.inputmethod.latin.common.StringUtils
 import org.futo.inputmethod.latin.uix.getSetting
 import java.util.Locale
 
@@ -71,6 +72,37 @@ class PersonalDictionaryAutoAdd(
         }
     }
 
+    /**
+     * Deletes the capitalized form of the lower-case [word] from the personal dictionary ("Ich"
+     * when "ich" was picked), for the current language only, if the main dictionary knows [word]
+     * but not that form. Such an entry, often added by another keyboard, otherwise keeps beating
+     * the lower-case word.
+     */
+    fun forgetCapitalizedForm(word: String) {
+        val locale = dictionaryFacilitator.mostConfidentLocale
+        if (locale == Locale.ROOT) return
+        val capitalized = StringUtils.capitalizeFirstCodePoint(word, locale)
+        if (capitalized == word) return
+        if (!dictionaryFacilitator.isValidMainDictionaryWord(word)) return
+        if (dictionaryFacilitator.isValidMainDictionaryWord(capitalized)) return
+
+        val language = locale.language
+        scope.launch(Dispatchers.IO) {
+            runCatching {
+                context.contentResolver.delete(
+                    UserDictionary.Words.CONTENT_URI,
+                    "${UserDictionary.Words.WORD}=? AND (${UserDictionary.Words.LOCALE} IS NULL OR " +
+                        "${UserDictionary.Words.LOCALE}=? OR ${UserDictionary.Words.LOCALE} LIKE ?)",
+                    arrayOf(capitalized, language, "${language}_%")
+                )
+            }.onSuccess {
+                if (it > 0) Log.i(TAG, "Deleted \"$capitalized\" from the personal dictionary ($language)")
+            }.onFailure {
+                Log.w(TAG, "Could not delete \"$capitalized\" from the personal dictionary", it)
+            }
+        }
+    }
+
     private fun isInPersonalDictionary(word: String): Boolean = runCatching {
         context.contentResolver.query(
             UserDictionary.Words.CONTENT_URI,
@@ -83,6 +115,9 @@ class PersonalDictionaryAutoAdd(
 
     companion object {
         private const val TAG = "PersonalDictAutoAdd"
+
+        /** Lowest importance InputLogic passes for a word picked from the suggestion strip. */
+        const val STRIP_PICK_IMPORTANCE = 1
 
         /** Importance InputLogic passes when the typed word itself was picked from the strip. */
         const val MANUAL_PICK_IMPORTANCE = 3

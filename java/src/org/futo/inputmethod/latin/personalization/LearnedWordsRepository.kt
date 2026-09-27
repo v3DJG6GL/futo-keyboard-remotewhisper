@@ -41,14 +41,16 @@ class LearnedWordsRepository(private val context: Context) : Closeable {
             .filter { !it.mIsBeginningOfSentence && !it.mIsNotAWord }
             .map { property ->
                 val word = property.mWord
+                val known = if (canTellKnownWords) isKnown(lookup!!, word) else null
                 LearnedWord(
                     word = word,
                     locale = locale.toString(),
                     count = property.mProbabilityInfo.mCount,
                     lastUsed = property.mProbabilityInfo.mTimestamp,
                     probability = property.probability,
-                    known = if (canTellKnownWords) isKnown(lookup!!, word, locale) else null,
+                    known = known,
                     inPersonalDictionary = word in personalWords,
+                    capitalizedFormOfKnownWord = known == false && isKnownInLowerCase(lookup!!, word, locale),
                     ngrams = if (includeNgrams) ngramsOf(property) else emptyList(),
                 )
             }
@@ -94,8 +96,13 @@ class LearnedWordsRepository(private val context: Context) : Closeable {
     }
 
     companion object {
-        fun isKnown(lookup: DictionaryFacilitator, word: String, locale: Locale): Boolean =
-            lookup.isValidSuggestionWord(word) || lookup.isValidSuggestionWord(word.lowercase(locale))
+        fun isKnown(lookup: DictionaryFacilitator, word: String): Boolean =
+            lookup.isValidSuggestionWord(word)
+
+        private fun isKnownInLowerCase(lookup: DictionaryFacilitator, word: String, locale: Locale): Boolean {
+            val lowerCase = word.lowercase(locale)
+            return lowerCase != word && lookup.isValidSuggestionWord(lowerCase)
+        }
 
         private fun ngramsOf(property: WordProperty): List<LearnedNgram> =
             property.mNgrams.orEmpty().map { ngram ->

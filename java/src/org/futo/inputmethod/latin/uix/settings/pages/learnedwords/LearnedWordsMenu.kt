@@ -40,6 +40,8 @@ import org.futo.inputmethod.latin.personalization.LearnedWordsAutoAddUses
 import org.futo.inputmethod.latin.personalization.LearnedWordsExporter
 import org.futo.inputmethod.latin.personalization.LearnedWordsRepository
 import org.futo.inputmethod.latin.personalization.LearnedWordsStoreLanguageOnly
+import org.futo.inputmethod.latin.personalization.LearnedWordsUnlearnCapitalizedInPersonalDictionary
+import org.futo.inputmethod.latin.personalization.LearnedWordsUnlearnCapitalizedOnPick
 import org.futo.inputmethod.latin.personalization.userHistoryDictionaryLocales
 import org.futo.inputmethod.latin.uix.settings.NavigationItem
 import org.futo.inputmethod.latin.uix.settings.NavigationItemStyle
@@ -57,6 +59,7 @@ const val LEARNED_WORDS_NAV_PATH = "learnedWords"
 const val LEARNED_WORDS_REVIEW_NAV_PATH = "learnedWords/review"
 
 private val autoAddEnabled = @Composable { useDataStoreValue(LearnedWordsAutoAddSetting) }
+private val unlearnCapitalizedEnabled = @Composable { useDataStoreValue(LearnedWordsUnlearnCapitalizedOnPick) }
 
 val LearnedWordsMenu = UserSettingsMenu(
     title = R.string.learned_words_title,
@@ -103,6 +106,18 @@ val LearnedWordsMenu = UserSettingsMenu(
         userSettingDecorationOnly {
             SectionLabel(stringResource(R.string.learned_words_section_yours))
         },
+        userSettingToggleDataStore(
+            title = R.string.learned_words_unlearn_capitalized,
+            subtitle = R.string.learned_words_unlearn_capitalized_subtitle,
+            setting = LearnedWordsUnlearnCapitalizedOnPick,
+            icon = settingIcon(R.drawable.learned_words_case)
+        ),
+        userSettingToggleDataStore(
+            title = R.string.learned_words_unlearn_capitalized_personal,
+            subtitle = R.string.learned_words_unlearn_capitalized_personal_subtitle,
+            setting = LearnedWordsUnlearnCapitalizedInPersonalDictionary,
+            icon = settingIcon(R.drawable.learned_words_case)
+        ).copy(visibilityCheck = unlearnCapitalizedEnabled),
         userSettingNavigationItem(
             title = R.string.learned_words_review,
             subtitle = R.string.learned_words_review_subtitle,

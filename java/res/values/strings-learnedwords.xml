@@ -20,6 +20,12 @@
     <string name="learned_words_language_only">Ignore language region</string>
     <string name="learned_words_language_only_subtitle">Save words for the whole language (de) rather than for your region (de_CH), so every variant of the language uses them</string>
 
+    <string name="learned_words_unlearn_capitalized">Forget capitalized form when picking lower case</string>
+    <string name="learned_words_unlearn_capitalized_subtitle">Picking “ich” from the suggestion bar makes the keyboard forget a learned “Ich”. Forms your dictionaries or contacts know are kept.</string>
+
+    <string name="learned_words_unlearn_capitalized_personal">Also in the personal dictionary</string>
+    <string name="learned_words_unlearn_capitalized_personal_subtitle">Also deletes “Ich” from your personal dictionary when the keyboard’s dictionary has only “ich”. Other keyboards share that dictionary.</string>
+
     <string name="learned_words_section_adding">Adding words</string>
     <string name="learned_words_section_yours">Your learned words</string>
 
@@ -71,6 +77,10 @@
         <item quantity="other">%1$d selected. Adding saves them to %2$s.</item>
     </plurals>
     <string name="learned_words_review_nothing_selected">Select words to add them to your personal dictionary or to delete them.</string>
+    <!-- Short tag on a learned word like "Ich" whose lower-case form is a known word -->
+    <string name="learned_words_review_capitalized_tag">Aa</string>
+    <string name="learned_words_review_capitalized_description">capitalized form of a dictionary word, can compete with it</string>
+    <string name="learned_words_review_capitalized_selected">Words marked Aa are capitalized forms of dictionary words, like “Ich” for “ich”. Delete them so the lower-case word wins again.</string>
     <string name="learned_words_review_add">Add to dictionary</string>
     <string name="learned_words_review_delete">Delete</string>
     <plurals name="learned_words_review_added">
