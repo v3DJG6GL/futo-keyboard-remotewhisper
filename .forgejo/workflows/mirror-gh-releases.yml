@@ -16,9 +16,11 @@
 # releases created by the Actions token), manual releases/edits emit `release`, and two
 # daily crons reconcile anything missed.
 #
-# Setup: secret GH_MIRROR_TOKEN (repository or user level), a GitHub token that can write
-# releases on the mirror repo: classic with `repo` scope, or fine-grained with
-# "Contents: read and write" on that repo. Without it the job only logs a notice.
+# Setup: secret GH_REPO_PACKAGES_WRITE (repository or user level), a GitHub classic PAT with
+# `repo` + `write:packages` scopes (only `repo` is used here, to write releases on the mirror
+# repo). Without it the job only logs a notice. Secret FJ_REPO_WRITE (Forgejo token,
+# write:repository) reads the source releases and downloads their assets: the run's own token
+# counts as anonymous on attachment downloads, which a private owner refuses (404).
 #
 # Sync semantics:
 #   * Drafts are skipped.
@@ -54,9 +56,10 @@ jobs:
     steps:
       - name: Sync releases (create missing, patch drift, fill assets)
         env:
-          GH_MIRROR_TOKEN: ${{ secrets.GH_MIRROR_TOKEN }}
-          # This repository is private: reading its releases needs the run token.
-          SRC_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DST_TOKEN: ${{ secrets.GH_REPO_PACKAGES_WRITE }}
+          # An owner token, not the run token: the run token counts as anonymous on attachment
+          # downloads, which a private owner refuses.
+          SRC_TOKEN: ${{ secrets.FJ_REPO_WRITE }}
         run: |
           set -euo pipefail
 
@@ -65,14 +68,14 @@ jobs:
           dst_api="https://api.github.com"
           echo "Syncing releases $SRC_REPO -> github.com/$DST_REPO"
 
-          if [ -z "$GH_MIRROR_TOKEN" ]; then
-            echo "::notice::GH_MIRROR_TOKEN secret not configured — skipping mirror"
+          if [ -z "$DST_TOKEN" ]; then
+            echo "::notice::GH_REPO_PACKAGES_WRITE secret not configured — skipping mirror"
             exit 0
           fi
           command -v jq >/dev/null || { apt-get update -qq && apt-get install -y -qq jq; }
 
           SRC_HDR="Authorization: token $SRC_TOKEN"
-          DST_HDR="Authorization: Bearer $GH_MIRROR_TOKEN"
+          DST_HDR="Authorization: Bearer $DST_TOKEN"
           # Reads retry (transient network); writes do not (a retried POST could double-create;
           # a failed write converges on the next run).
           sget() { curl -fsS --retry 3 --retry-delay 5 --retry-connrefused --retry-all-errors -H "$SRC_HDR" "$@"; }

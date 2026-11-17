@@ -150,12 +150,12 @@ with a manual run of the workflow on `main` (Actions tab, `ref` = the topic) or
 on `v*-rw.*` tags and then starts `mirror-gh-releases.yml`, which copies the release and its
 APK to the GitHub mirror (the push mirror itself only copies branches and tags).
 
-### Secrets (Forgejo → repository settings → Actions → Secrets)
+### Secrets (Forgejo → repository or user settings → Actions → Secrets)
 
 | Secret | Used for |
 |---|---|
 | `KEYSTORE_B64` | base64 of the release keystore. Must be the key that signed every earlier release, or users cannot update |
 | `KEYSTORE_PASSWORD`, `KEY_PASSWORD`, `KEYSTORE_ALIAS` | keystore credentials |
-| `RELEASE_TOKEN` | token with repository write access, to publish releases |
+| `FJ_REPO_WRITE` | Forgejo token, write:repository: publishes releases, and lets `mirror-gh-releases.yml` read them and download their APKs (the run token counts as anonymous on attachment downloads, which a private owner refuses) |
 | `HF_TOKEN` | optional; avoids huggingface rate limits when cloning the swipe model submodule |
-| `GH_MIRROR_TOKEN` | GitHub token that can write releases on the mirror repo (`repo` scope, or fine-grained "Contents: read and write"); lets `mirror-gh-releases.yml` copy releases and APKs to GitHub |
+| `GH_REPO_PACKAGES_WRITE` | GitHub classic PAT, `repo` + `write:packages` scopes (only `repo` is used here, to write releases on the mirror repo); lets `mirror-gh-releases.yml` copy releases and APKs to GitHub |

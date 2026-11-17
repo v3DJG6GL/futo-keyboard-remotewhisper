@@ -101,7 +101,7 @@ jobs:
           direction: upload
           release-dir: dist
           release-notes-file: release-notes.md
-          token: ${{ secrets.RELEASE_TOKEN }}
+          token: ${{ secrets.FJ_REPO_WRITE }}
           override: false
 
       # Forgejo emits no `release` event for releases created with the Actions token, so start
